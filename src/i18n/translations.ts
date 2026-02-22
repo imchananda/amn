@@ -3,7 +3,7 @@ export type Language = 'th' | 'en';
 export const translations = {
     th: {
         // Header
-        appTitle: 'Prada Princess ✨',
+        appTitle: 'Prada Princess 👑',
         all: 'ทั้งหมด',
         hide: '✓ ซ่อน',
         show: '○ แสดง',
@@ -149,7 +149,7 @@ export const translations = {
     },
     en: {
         // Header
-        appTitle: 'Prada Princess ✨',
+        appTitle: 'Prada Princess 👑',
         all: 'All',
         hide: '✓ Hide',
         show: '○ Show',
