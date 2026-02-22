@@ -23,6 +23,7 @@ export default {
         }
       },
       fontFamily: {
+        google: ['"Google Sans"', '"Noto Sans Thai"', 'sans-serif'],
         display: ['"Poiret One"', '"Noto Sans Thai"', 'serif'],
         body: ['"Noto Sans Thai"', 'Inter', 'sans-serif'],
         sans: ['"Noto Sans Thai"', 'Inter', 'sans-serif'],
