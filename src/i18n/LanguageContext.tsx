@@ -18,10 +18,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
             if (saved === 'th' || saved === 'en') {
                 return saved;
             }
+
+            // Auto-detect browser language
+            const browserLang = navigator.language.toLowerCase();
+            if (browserLang.startsWith('en')) {
+                return 'en';
+            }
         } catch (e) {
             console.error('Failed to load language preference:', e);
         }
-        return 'th'; // Default to Thai
+        return 'th'; // Default to Thai for any other case
     });
 
     useEffect(() => {
