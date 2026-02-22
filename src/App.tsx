@@ -729,7 +729,7 @@ function App() {
                   </div>
                 </div>
 
-                <div className="-mt-1">
+                <div className="mt-0.5">
                   <span className="text-2xl sm:text-3xl font-google font-bold tracking-widest text-gray-800 leading-none">
                     Namtan Tipnaree
                   </span>
