@@ -93,7 +93,6 @@ const platformConfig = {
 // ===========================================
 // ⚙️ SETTINGS - แก้ไขตรงนี้
 // ===========================================
-const SPREADSHEET_ID = '1_MYS-pKcUNguQ4NNcYPU7sXQya9SioubuPFyRxV9_6s';
 const SHEETS_CONFIG = [
   { phase: 'pre', label: '22-23 Feb', gid: '1884793749' },
   { phase: 'airport', label: '24-25 Feb', gid: '0' },
@@ -366,7 +365,7 @@ function App() {
 
       await Promise.all(SHEETS_CONFIG.map(async (sheet) => {
         try {
-          const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${sheet.gid}`;
+          const url = `/api/sheet?gid=${sheet.gid}`;
           const response = await fetch(url);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           let csvText = await response.text();
@@ -437,7 +436,7 @@ function App() {
   // Fetch positive messages from Google Sheets — parse 3 columns independently
   const fetchPositiveMessages = useCallback(async () => {
     try {
-      const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${POSITIVE_MESSAGES_GID}`;
+      const url = `/api/sheet?gid=${POSITIVE_MESSAGES_GID}`;
       const response = await fetch(url);
       let csvText = await response.text();
       csvText = csvText.replace(/^\uFEFF/, '');
