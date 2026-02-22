@@ -134,6 +134,9 @@ function App() {
   const [filterPlatform, setFilterPlatform] = useState<string | null>(null);
   const [showGlobalStats, setShowGlobalStats] = useState(true);
 
+  // Ref for the main scrollable container
+  const mainRef = useRef<HTMLElement>(null);
+
   // Auto-detect phase based on current date
   const getInitialPhase = () => {
     const today = new Date();
@@ -651,7 +654,7 @@ function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col relative bg-prada-offwhite overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-prada-offwhite overflow-hidden">
       {/* Subtle paper texture overlay */}
       <div className="fixed inset-0 z-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23000000' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
@@ -779,8 +782,13 @@ function App() {
 
                 {!showGlobalStats && (
                   <button
-                    onClick={() => setShowGlobalStats(true)}
-                    className="ml-auto px-3.5 h-8 rounded-full flex items-center gap-2 bg-prada-charcoal text-white shadow-lg shadow-black/10 transition-all hover:scale-105 active:scale-95 group animate-in fade-in slide-in-from-right-4"
+                    onClick={() => {
+                      setShowGlobalStats(true);
+                      setTimeout(() => {
+                        mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                      }, 50);
+                    }}
+                    className="ml-auto px-3.5 h-8 rounded-full flex items-center gap-2 bg-prada-charcoal text-white shadow-lg shadow-black/10 transition-all hover:scale-105 active:scale-95 group animate-in fade-in slide-in-from-right-4 relative z-50"
                   >
                     <span className="text-[10px] animate-pulse">✦</span>
                     <span className="text-[8.5px] font-bold uppercase tracking-wider">{t('tapToExpand')}</span>
@@ -794,8 +802,9 @@ function App() {
 
       {/* Scrollable Middle Area */}
       <main
+        ref={mainRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto min-h-0"
       >
         <div className="max-w-lg mx-auto flex flex-col gap-1 px-3 pt-4 pb-2">
 
@@ -1054,8 +1063,8 @@ function App() {
         </div>
       </main>
 
-      {/* Bottom Bar Container (Fixed at bottom) */}
-      <footer className="relative z-40 flex-shrink-0 bg-prada-offwhite pt-2 pb-2 border-t border-prada-warm/30 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+      {/* Bottom Bar Container (Fixed at bottom, transparent) */}
+      <footer className="relative z-40 flex-shrink-0 bg-transparent pt-2 pb-2">
         <div className="max-w-lg mx-auto relative px-4">
           {/* Stats Bar */}
           <div className="bg-prada-charcoal/95 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center justify-between shadow-xl border border-prada-charcoal/50">
