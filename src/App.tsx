@@ -504,7 +504,7 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activePhase]);
 
-  // Filter and sort tasks (Focus first, then by engagement score)
+  // Filter and sort tasks (Focus first, then maintain original newest-to-oldest order)
   const filteredTasks = useMemo(() => {
     let result = tasks;
     if (filterPlatform) {
@@ -512,12 +512,13 @@ function App() {
     }
     const pending = result.filter(t => !isTaskCompleted(t));
     const done = result.filter(t => isTaskCompleted(t));
-    // Sort: Focus posts first, then by engagement score (high to low)
-    const engagementScore = (t: Task) => t.likes + t.comments + t.shares + t.reposts;
+
+    // Sort: Focus posts first. Original array is already newest-to-oldest, so returning 0 keeps that order.
     const sortTasks = (a: Task, b: Task) => {
       if (a.focus !== b.focus) return b.focus ? 1 : -1;
-      return engagementScore(b) - engagementScore(a);
+      return 0;
     };
+
     const sortedPending = [...pending].sort(sortTasks);
     const sortedDone = [...done].sort(sortTasks);
     return [...sortedPending, ...sortedDone];
@@ -1438,160 +1439,160 @@ function App() {
 
           return (
             <div
-              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
               onClick={() => setSelectedTask(null)}
             >
-              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+              <div className="absolute inset-0 bg-prada-charcoal/40 backdrop-blur-sm animate-in fade-in duration-200" />
 
               <div
-                className="relative w-full max-w-md mx-3 mb-0 sm:mb-4 max-h-[92vh] flex flex-col"
+                className="relative w-full max-w-[380px] bg-prada-offwhite rounded-[24px] shadow-2xl border border-prada-warm/50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="bg-white rounded-t-3xl sm:rounded-3xl border border-gray-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-                  {/* Handle bar */}
-                  <div className="w-8 h-1 bg-gray-300 rounded-full mx-auto mt-2.5 mb-0 sm:hidden flex-shrink-0" />
 
-                  {/* Header */}
-                  <div className="px-4 pt-3 pb-2.5 flex items-center justify-between flex-shrink-0 border-b border-gray-100">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${platformConfig[platform].color} flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
-                        {platformConfig[platform].icon}
-                      </div>
-                      <p className="text-sm font-semibold text-prada-charcoal truncate">{selectedTask.title || t('noTitle')}</p>
+                {/* Header */}
+                <div className="px-4 py-3 pb-2.5 flex items-center justify-between border-b border-prada-warm/60 bg-white/40">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${platformConfig[platform].color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
+                      {platformConfig[platform].icon}
                     </div>
+                    <p className="text-[14px] font-bold text-prada-charcoal truncate">{selectedTask.title || t('noTitle')}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    {/* Mark Done / Undo Pill Button */}
+                    {isTaskCompleted(selectedTask) ? (
+                      <button
+                        onClick={() => handleUnmarkComplete(selectedTask)}
+                        className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 transition-colors shadow-sm flex items-center gap-1"
+                        title={t('undoDoneBtn')}
+                      >
+                        ✓ {t('done')}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleMarkComplete(selectedTask)}
+                        className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-md hover:shadow-lg transition-all border border-transparent"
+                      >
+                        {t('markDoneBtn')}
+                      </button>
+                    )}
+
+                    {/* Close Button */}
                     <button
                       onClick={() => setSelectedTask(null)}
-                      className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-sm transition-colors flex-shrink-0 ml-2"
+                      className="w-8 h-8 rounded-full bg-prada-cream/50 hover:bg-prada-warm flex items-center justify-center text-prada-taupe transition-colors"
                     >
                       ✕
                     </button>
                   </div>
+                </div>
 
-                  {/* Scrollable body */}
-                  <div className="overflow-y-auto flex-1 px-4 py-3 space-y-3">
+                {/* Body Content */}
+                <div className="p-4 space-y-3.5 bg-prada-offwhite flex-1 overflow-y-auto max-h-[75vh]">
 
-                    {/* ── SECTION 1: Hashtags (not shown for Facebook) ── */}
-                    {hasHashtags && (
-                      <div className="rounded-2xl border border-gray-200 overflow-hidden">
-                        <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100">
-                          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{t('sectionHashtags')}</span>
-                          <button
-                            onClick={() => handleCopyHashtags(selectedTask)}
-                            className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all ${copiedType === 'hashtags'
-                              ? 'bg-prada-red text-white'
-                              : 'bg-white border border-prada-red/30 text-prada-red hover:bg-prada-red/10'
-                              }`}
-                          >
-                            {copiedType === 'hashtags' ? t('copiedBtn') : t('copyTagsBtn')}
-                          </button>
-                        </div>
-                        <div className="px-3 py-2.5 max-h-28 overflow-y-auto">
-                          <p className="text-gray-700 text-xs whitespace-pre-wrap leading-relaxed">{selectedTask.hashtags}</p>
-                        </div>
+                  {/* 1. Hashtags */}
+                  {hasHashtags && (
+                    <div className="relative bg-white border border-prada-warm/60 rounded-[16px] p-3 pt-2.5 shadow-sm">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-bold text-prada-taupe/80 uppercase tracking-widest">{t('sectionHashtags')}</span>
+                        {/* Copy Button */}
+                        <button
+                          onClick={() => handleCopyHashtags(selectedTask)}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold transition-all ${copiedType === 'hashtags' ? 'text-prada-red bg-prada-red/10' : 'text-prada-taupe hover:text-prada-charcoal hover:bg-prada-cream'
+                            }`}
+                        >
+                          {copiedType === 'hashtags' ? (
+                            <>✓ <span className="hidden sm:inline">{t('copiedBtn')}</span></>
+                          ) : (
+                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></>
+                          )}
+                        </button>
                       </div>
-                    )}
+                      <div className="max-h-32 overflow-y-auto pr-1">
+                        <p className="text-[12.5px] text-prada-charcoal/90 leading-relaxed font-medium whitespace-pre-wrap">{selectedTask.hashtags}</p>
+                      </div>
+                    </div>
+                  )}
 
-                    {/* ── SECTION 2: Random Message ── */}
-                    <div className="rounded-2xl border border-gray-200 overflow-hidden">
-                      <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100">
-                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{t('sectionMessage')}</span>
+                  {/* 2. Generated Message */}
+                  <div className="relative bg-white border border-prada-warm/60 rounded-[16px] p-3 pt-2.5 shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-bold text-prada-taupe/80 uppercase tracking-widest">{t('sectionMessage')}</span>
+                      <div className="flex items-center gap-0.5">
+                        {/* Regenerate Button */}
+                        {generatedMessage && msgReady && (
+                          <button
+                            onClick={generateRandomMessage}
+                            className="p-1.5 rounded-md text-prada-taupe hover:text-prada-charcoal hover:bg-prada-cream transition-colors"
+                            title={t('regenerate')}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                          </button>
+                        )}
+                        {/* Copy Button */}
                         {generatedMessage && (
                           <button
                             onClick={handleCopyMessage}
-                            className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all ${copiedType === 'message'
-                              ? 'bg-prada-red text-white'
-                              : 'bg-white border border-prada-red/30 text-prada-red hover:bg-prada-red/10'
+                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[10px] font-bold transition-all ${copiedType === 'message' ? 'text-prada-red bg-prada-red/10' : 'text-prada-taupe hover:text-prada-charcoal hover:bg-prada-cream'
                               }`}
+                            title={t('copyMsgBtn')}
                           >
-                            {copiedType === 'message' ? t('copiedBtn') : t('copyMsgBtn')}
+                            {copiedType === 'message' ? '✓' : (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            )}
                           </button>
-                        )}
-                      </div>
-                      <div className="px-3 py-2.5 space-y-2">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={generateRandomMessage}
-                            disabled={!msgReady}
-                            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${msgReady
-                              ? 'bg-prada-red hover:bg-prada-charcoal text-white shadow-sm'
-                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                              }`}
-                          >
-                            {t('generateCaption')}
-                          </button>
-                          {generatedMessage && msgReady && (
-                            <button
-                              onClick={generateRandomMessage}
-                              className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium transition-colors"
-                            >
-                              {t('regenerate')}
-                            </button>
-                          )}
-                        </div>
-                        {!msgReady && (
-                          <p className="text-gray-400 text-[10px]">{t('noPositiveMessages')}</p>
-                        )}
-                        {generatedMessage && (
-                          <p className="text-gray-800 text-xs p-2.5 bg-white rounded-xl border border-gray-200 leading-relaxed">{generatedMessage}</p>
                         )}
                       </div>
                     </div>
 
-                    {/* ── SECTION 3: Copy All (message + hashtags) — not shown for Facebook ── */}
+                    {!generatedMessage ? (
+                      <button
+                        onClick={generateRandomMessage}
+                        disabled={!msgReady}
+                        className={`w-full py-3 rounded-xl text-[12.5px] font-bold transition-all ${msgReady
+                          ? 'bg-prada-cream/40 hover:bg-prada-cream text-prada-charcoal border border-prada-warm border-dashed'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          }`}
+                      >
+                        {msgReady ? `✨ ${t('generateCaption')}` : t('noPositiveMessages')}
+                      </button>
+                    ) : (
+                      <p className="text-[13px] text-prada-charcoal leading-relaxed">{generatedMessage}</p>
+                    )}
+                  </div>
+
+                  {/* 3. Primary Actions */}
+                  <div className="flex gap-2.5 pt-1">
                     {!isFacebook && generatedMessage && hasHashtags && (
                       <button
                         onClick={() => handleCopyBoth(selectedTask)}
-                        className={`w-full py-2.5 rounded-2xl text-xs font-bold transition-all border ${copiedType === 'both'
+                        className={`flex-1 py-3 rounded-[14px] text-[12.5px] font-bold transition-all shadow-sm border ${copiedType === 'both'
                           ? 'bg-prada-charcoal text-white border-prada-charcoal'
-                          : 'bg-prada-gold/15 hover:bg-prada-gold/25 text-prada-darkgold border-prada-gold/30'
+                          : 'bg-white hover:bg-prada-cream text-prada-charcoal border-prada-warm'
                           }`}
                       >
-                        {copiedType === 'both' ? t('copiedBtn') : `${t('copyAllBtn')} — ${t('sectionMessage')} + ${t('sectionHashtags')}`}
+                        {copiedType === 'both' ? t('copiedBtn') : t('copyAllBtn')}
                       </button>
                     )}
 
-                    {/* ── SECTION 4: Actions (Go to post + Mark done) ── */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleGoToPost(selectedTask)}
-                        className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r ${platformConfig[platform].color} hover:opacity-90 transition-opacity shadow-sm`}
-                      >
-                        {t('goPost')}
-                      </button>
-                      {isTaskCompleted(selectedTask) ? (
-                        <button
-                          onClick={() => handleUnmarkComplete(selectedTask)}
-                          className="px-4 py-2.5 rounded-xl text-sm font-medium bg-green-50 hover:bg-green-100 text-green-600 transition-colors border border-green-200"
-                        >
-                          {t('undoDoneBtn')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleMarkComplete(selectedTask)}
-                          className="px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 hover:bg-green-50 text-gray-600 hover:text-green-600 transition-colors border border-gray-200 hover:border-green-200"
-                        >
-                          {t('markDoneBtn')}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* ── SECTION 5: Usage Tips ── */}
-                    {tips.length > 0 && (
-                      <div className="rounded-2xl border border-amber-100 bg-amber-50/60 overflow-hidden">
-                        <div className="px-3 py-2 border-b border-amber-100">
-                          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">{t('sectionTips')}</span>
-                        </div>
-                        <ul className="px-3 py-2.5 space-y-1.5 pb-3">
-                          {tips.map((tip, i) => (
-                            <li key={i} className="text-[12px] text-amber-800 leading-snug">{tip}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Bottom padding for scroll */}
-                    <div className="h-1" />
+                    <button
+                      onClick={() => handleGoToPost(selectedTask)}
+                      className={`flex-1 py-3 rounded-[14px] bg-gradient-to-r ${platformConfig[platform].color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
+                    >
+                      {t('goPost')}
+                      <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 stroke-current stroke-[2.5]"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>
+                    </button>
                   </div>
+
+                  {/* 4. Subtle Tips */}
+                  {tips.length > 0 && (
+                    <div className="text-center pt-2 space-y-1">
+                      {tips.map((tip, i) => (
+                        <p key={i} className="text-[10px] text-prada-taupe/60 italic leading-snug">{tip}</p>
+                      ))}
+                    </div>
+                  )}
+
                 </div>
               </div>
             </div>

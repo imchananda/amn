@@ -81,15 +81,15 @@ export const translations = {
         undoDoneBtn: '↩ ยกเลิก',
 
         // Usage Tips per platform
-        igTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment IG',
-        igTip2: '📸 คัดลอกข้อความ + # → สร้างโพสต์ / Reels',
-        igTip3: '#️⃣ คัดลอก # เท่านั้น → ใส่ใน Stories',
-        xTip1: '✍️ ข้อความ / # / ข้อความ+# → Reply หรือสร้างโพสต์บน X',
-        ttTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment TikTok',
-        ttTip2: '🎬 คัดลอกข้อความ + # → สร้างโพสต์ / Clip',
-        ytTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment YouTube',
-        ytTip2: '🎥 คัดลอกข้อความ + # → สร้าง Video / Short',
-        fbTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment Facebook',
+        igTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment IG (อย่าลืมกดไลก์ด้วยนะ ❤️)',
+        igTip2: '📸 คัดลอกข้อความ + # → สร้างโพสต์ / Reels (แชร์และเซฟเก็บไว้ด้วยน้า ✨)',
+        igTip3: '#️⃣ คัดลอก # เท่านั้น → ใส่ใน Stories (แชร์ต่อให้ชื่อเสียงปังๆ 🚀)',
+        xTip1: '✍️ ข้อความ / # / ข้อความ+# → Reply หรือสร้างโพสต์บน X (อย่าลืมกดไลก์ รีโพสต์ และโควตด้วยนะ 🔁)',
+        ttTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment TikTok (อย่าลืมกดไลก์ ❤️)',
+        ttTip2: '🎬 คัดลอกข้อความ + # → สร้างโพสต์ / Clip (แชร์และเซฟเข้าบุ๊กมาร์กด้วยนะ 🔖)',
+        ytTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment YouTube (อย่าลืมกดไลก์ 👍)',
+        ytTip2: '🎥 คัดลอกข้อความ + # → สร้าง Video / Short (และกดแชร์คลิปออกไปด้วยนะ 📤)',
+        fbTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment Facebook (อย่าลืมกดไลก์และแชร์เป็นสาธารณะด้วยนะ 👍)',
 
         // Stats Labels & Descriptions
         totalLikesLabel: 'ถูกใจทั้งหมด',
@@ -227,15 +227,15 @@ export const translations = {
         undoDoneBtn: '↩ Undo',
 
         // Usage Tips per platform
-        igTip1: '📝 Copy message → paste as IG Comment',
-        igTip2: '📸 Copy message + # → create Post / Reels',
-        igTip3: '#️⃣ Copy # only → paste in Stories',
-        xTip1: '✍️ Message / # / Message+# → Reply or Post on X',
-        ttTip1: '📝 Copy message → paste as TikTok Comment',
-        ttTip2: '🎬 Copy message + # → create Post / Clip',
-        ytTip1: '📝 Copy message → paste as YouTube Comment',
-        ytTip2: '🎥 Copy message + # → create Video / Short',
-        fbTip1: '📝 Copy message → paste as Facebook Comment',
+        igTip1: "📝 Copy message → paste as IG Comment (Don't forget to like! ❤️)",
+        igTip2: "📸 Copy message + # → create Post / Reels (Share and Save too! ✨)",
+        igTip3: "#️⃣ Copy # only → paste in Stories (Share for more impact! 🚀)",
+        xTip1: "✍️ Msg / # / Msg+# → Reply/Post on X (Remember to Like, Repost & Quote! 🔁)",
+        ttTip1: "📝 Copy message → paste as TikTok Comment (Don't forget to like! ❤️)",
+        ttTip2: "🎬 Copy message + # → create Post / Clip (Share and Save to bookmarks! 🔖)",
+        ytTip1: "📝 Copy message → paste as YouTube Comment (Don't forget to like! 👍)",
+        ytTip2: "🎥 Copy message + # → create Video / Short (And share the video! 📤)",
+        fbTip1: "📝 Copy message → paste as Facebook Comment (Don't forget to like & share publicly! 👍)",
 
         // Stats Labels & Descriptions
         totalLikesLabel: 'Total Likes',
