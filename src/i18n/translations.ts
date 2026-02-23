@@ -14,7 +14,7 @@ export const translations = {
 
         // Stats
         pending: 'รอดำเนินการ',
-        done: 'เสร็จสิ้น',
+        done: '✓ เสร็จสิ้น',
         progress: 'กำลังดำเนินการ',
         completed: 'เสร็จสมบูรณ์',
 
@@ -51,24 +51,24 @@ export const translations = {
         shareToX: '📱 แชร์ไป X',
 
         // Caption Generator
-        generateCaption: '✨ สุ่มข้อความ',
+        generateCaption: 'สุ่มข้อความ',
         noPositiveMessages: 'ไม่มีข้อความจากชีต (โหลดไม่สำเร็จหรือชีตว่าง)',
-        regenerate: '🔄',
+        regenerate: 'สุ่มใหม่',
         generatedMessage: 'ข้อความที่สร้าง:',
-        copyMessageOnly: '📋 คัดลอกข้อความ',
-        copyHashtagsOnly: '# คัดลอก Hashtags',
-        copyBoth: '📋 คัดลอกทั้งหมด',
-        copiedMessage: '✓ คัดลอกข้อความแล้ว!',
-        copiedHashtags: '✓ คัดลอก Hashtags แล้ว!',
-        copiedBoth: '✓ คัดลอกทั้งหมดแล้ว!',
+        copyMessageOnly: 'คัดลอกข้อความ',
+        copyHashtagsOnly: 'คัดลอกแฮชแท็ก',
+        copyBoth: 'คัดลอกทั้งหมด',
+        copiedMessage: 'คัดลอกข้อความแล้ว!',
+        copiedHashtags: 'คัดลอก Hashtags แล้ว!',
+        copiedBoth: 'คัดลอกทั้งหมดแล้ว!',
 
         // Focus
         focusBadge: '⭐ สำคัญ',
 
         // Compact Copy Buttons
-        copyMsgBtn: '📋 คัดลอกข้อความ',
-        copyTagsBtn: '📋 คัดลอก #',
-        copyAllBtn: '📋 คัดลอกทั้งหมด',
+        copyMsgBtn: 'คัดลอกข้อความ',
+        copyTagsBtn: 'คัดลอกแฮชแท็ก',
+        copyAllBtn: 'คัดลอก ข้อความ + แฮชแท็ก',
         copiedBtn: '✓ คัดลอกแล้ว!',
 
         // Modal Section Labels
@@ -160,7 +160,7 @@ export const translations = {
 
         // Stats
         pending: 'Pending',
-        done: 'Done',
+        done: '✓ Done',
         progress: 'progress',
         completed: 'Completed',
 
@@ -197,24 +197,24 @@ export const translations = {
         shareToX: '📱 Share to X',
 
         // Caption Generator
-        generateCaption: '✨ Random Caption',
+        generateCaption: 'Random Caption',
         noPositiveMessages: 'No messages from sheet (load failed or sheet empty)',
-        regenerate: '🔄',
+        regenerate: 'Randomize',
         generatedMessage: 'Generated Message:',
-        copyMessageOnly: '📋 Copy Message',
-        copyHashtagsOnly: '# Copy Hashtags',
-        copyBoth: '📋 Copy All',
-        copiedMessage: '✓ Message Copied!',
-        copiedHashtags: '✓ Hashtags Copied!',
-        copiedBoth: '✓ All Copied!',
+        copyMessageOnly: 'Copy Message',
+        copyHashtagsOnly: 'Copy Hashtags',
+        copyBoth: 'Copy All',
+        copiedMessage: 'Message Copied!',
+        copiedHashtags: 'Hashtags Copied!',
+        copiedBoth: 'All Copied!',
 
         // Focus
         focusBadge: '⭐ Focus',
 
         // Compact Copy Buttons
-        copyMsgBtn: '📋 Copy Msg',
-        copyTagsBtn: '📋 Copy #',
-        copyAllBtn: '📋 Copy All',
+        copyMsgBtn: 'Copy Message',
+        copyTagsBtn: 'Copy Hashtags',
+        copyAllBtn: 'Copy Message + Hashtags',
         copiedBtn: '✓ Copied!',
 
         // Modal Section Labels

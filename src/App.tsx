@@ -1459,24 +1459,6 @@ function App() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 ml-2">
-                    {/* Mark Done / Undo Pill Button */}
-                    {isTaskCompleted(selectedTask) ? (
-                      <button
-                        onClick={() => handleUnmarkComplete(selectedTask)}
-                        className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 transition-colors shadow-sm flex items-center gap-1"
-                        title={t('undoDoneBtn')}
-                      >
-                        ✓ {t('done')}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleMarkComplete(selectedTask)}
-                        className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-md hover:shadow-lg transition-all border border-transparent"
-                      >
-                        {t('markDoneBtn')}
-                      </button>
-                    )}
-
                     {/* Close Button */}
                     <button
                       onClick={() => setSelectedTask(null)}
@@ -1498,13 +1480,18 @@ function App() {
                         {/* Copy Button */}
                         <button
                           onClick={() => handleCopyHashtags(selectedTask)}
-                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold transition-all ${copiedType === 'hashtags' ? 'text-prada-red bg-prada-red/10' : 'text-prada-taupe hover:text-prada-charcoal hover:bg-prada-cream'
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border shadow-sm ${copiedType === 'hashtags'
+                            ? 'text-white bg-emerald-500 border-emerald-600'
+                            : 'text-prada-charcoal bg-prada-cream/40 border-prada-warm hover:bg-prada-cream hover:border-prada-taupe/40'
                             }`}
                         >
                           {copiedType === 'hashtags' ? (
-                            <>✓ <span className="hidden sm:inline">{t('copiedBtn')}</span></>
+                            t('copiedBtn')
                           ) : (
-                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></>
+                            <>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                              {t('copyTagsBtn')}
+                            </>
                           )}
                         </button>
                       </div>
@@ -1518,27 +1505,33 @@ function App() {
                   <div className="relative bg-white border border-prada-warm/60 rounded-[16px] p-3 pt-2.5 shadow-sm flex flex-col">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[10px] font-bold text-prada-taupe/80 uppercase tracking-widest">{t('sectionMessage')}</span>
-                      <div className="flex items-center gap-0.5">
+                      <div className="flex items-center gap-1.5">
                         {/* Regenerate Button */}
                         {generatedMessage && msgReady && (
                           <button
                             onClick={generateRandomMessage}
-                            className="p-1.5 rounded-md text-prada-taupe hover:text-prada-charcoal hover:bg-prada-cream transition-colors"
-                            title={t('regenerate')}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-prada-charcoal bg-prada-cream/40 border border-prada-warm hover:bg-prada-cream hover:border-prada-taupe/40 transition-all shadow-sm"
                           >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            {t('regenerate')}
                           </button>
                         )}
                         {/* Copy Button */}
                         {generatedMessage && (
                           <button
                             onClick={handleCopyMessage}
-                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[10px] font-bold transition-all ${copiedType === 'message' ? 'text-prada-red bg-prada-red/10' : 'text-prada-taupe hover:text-prada-charcoal hover:bg-prada-cream'
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border shadow-sm ${copiedType === 'message'
+                              ? 'text-white bg-emerald-500 border-emerald-600'
+                              : 'text-prada-charcoal bg-prada-cream/40 border-prada-warm hover:bg-prada-cream hover:border-prada-taupe/40'
                               }`}
-                            title={t('copyMsgBtn')}
                           >
-                            {copiedType === 'message' ? '✓' : (
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            {copiedType === 'message' ? (
+                              t('copiedBtn')
+                            ) : (
+                              <>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                {t('copyMsgBtn')}
+                              </>
                             )}
                           </button>
                         )}
@@ -1549,12 +1542,17 @@ function App() {
                       <button
                         onClick={generateRandomMessage}
                         disabled={!msgReady}
-                        className={`w-full py-3 rounded-xl text-[12.5px] font-bold transition-all ${msgReady
-                          ? 'bg-prada-cream/40 hover:bg-prada-cream text-prada-charcoal border border-prada-warm border-dashed'
-                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        className={`w-full py-4 rounded-xl text-[13px] font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${msgReady
+                          ? 'bg-prada-cream/80 hover:bg-prada-cream text-prada-charcoal border border-prada-warm'
+                          : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
                           }`}
                       >
-                        {msgReady ? `✨ ${t('generateCaption')}` : t('noPositiveMessages')}
+                        {msgReady ? (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="m5 3 1 1" /><path d="m5 21 1-1" /><path d="m21 3-1 1" /><path d="m21 21-1-1" /></svg>
+                            {t('generateCaption')}
+                          </>
+                        ) : t('noPositiveMessages')}
                       </button>
                     ) : (
                       <p className="text-[13px] text-prada-charcoal leading-relaxed">{generatedMessage}</p>
@@ -1562,26 +1560,50 @@ function App() {
                   </div>
 
                   {/* 3. Primary Actions */}
-                  <div className="flex gap-2.5 pt-1">
+                  <div className="flex flex-col gap-2.5 pt-1">
                     {!isFacebook && generatedMessage && hasHashtags && (
                       <button
                         onClick={() => handleCopyBoth(selectedTask)}
-                        className={`flex-1 py-3 rounded-[14px] text-[12.5px] font-bold transition-all shadow-sm border ${copiedType === 'both'
-                          ? 'bg-prada-charcoal text-white border-prada-charcoal'
-                          : 'bg-white hover:bg-prada-cream text-prada-charcoal border-prada-warm'
+                        className={`w-full py-3 rounded-[14px] text-[12.5px] font-bold transition-all shadow-sm border flex items-center justify-center gap-1.5 ${copiedType === 'both'
+                          ? 'bg-emerald-500 text-white border-emerald-600'
+                          : 'bg-prada-cream/60 hover:bg-prada-cream text-prada-charcoal border-prada-warm hover:border-prada-taupe/40'
                           }`}
                       >
-                        {copiedType === 'both' ? t('copiedBtn') : t('copyAllBtn')}
+                        {copiedType === 'both' ? (
+                          t('copiedBtn')
+                        ) : (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            {t('copyAllBtn')}
+                          </>
+                        )}
                       </button>
                     )}
 
-                    <button
-                      onClick={() => handleGoToPost(selectedTask)}
-                      className={`flex-1 py-3 rounded-[14px] bg-gradient-to-r ${platformConfig[platform].color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
-                    >
-                      {t('goPost')}
-                      <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 stroke-current stroke-[2.5]"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>
-                    </button>
+                    <div className="flex gap-2.5">
+                      <button
+                        onClick={() => handleGoToPost(selectedTask)}
+                        className={`flex-1 py-3.5 rounded-[14px] bg-gradient-to-r ${platformConfig[platform].color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
+                      >
+                        {t('goPost')}
+                      </button>
+
+                      {isTaskCompleted(selectedTask) ? (
+                        <button
+                          onClick={() => handleUnmarkComplete(selectedTask)}
+                          className="flex-1 py-3.5 rounded-[14px] bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 text-[12.5px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                        >
+                          {t('done')}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleMarkComplete(selectedTask)}
+                          className="flex-1 py-3.5 rounded-[14px] bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5 border border-transparent"
+                        >
+                          {t('markDoneBtn')}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* 4. Subtle Tips */}
