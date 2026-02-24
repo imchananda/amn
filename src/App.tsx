@@ -101,7 +101,10 @@ const SHEETS_CONFIG = [
   { phase: 'aftermath', label: '27 Feb - 9 Mar', gid: '1605499344' },
   { phase: 'aftermath2', label: '27 Feb - 9 Mar', gid: '359554028' },
 ];
-const POSITIVE_MESSAGES_GID = '211253247'; // Sheet for positive messages
+const MSG_SHEETS = {
+  COMPOUND: '211253247', // Sheet 1: Logic combining p1 + p2 + emoji
+  COMPLETE: '219458934'  // Sheet 2: Logic picking a complete sentence
+};
 // ===========================================
 
 function App() {
@@ -115,9 +118,9 @@ function App() {
   const [copiedType, setCopiedType] = useState<'message' | 'hashtags' | 'both' | null>(null);
 
   // Positive messages state — organized by language
-  const [msgPools, setMsgPools] = useState<Record<string, { p1: string[], p2: string[] }>>({
-    en: { p1: [], p2: [] },
-    th: { p1: [], p2: [] }
+  const [msgPools, setMsgPools] = useState<Record<string, { p1: string[], p2: string[], complete: string[] }>>({
+    en: { p1: [], p2: [], complete: [] },
+    th: { p1: [], p2: [], complete: [] }
   });
   const [emojiPool, setEmojiPool] = useState<string[]>([]);
   const [completed, setCompleted] = useState<Record<string, CompletedState>>(() => {
@@ -436,46 +439,70 @@ function App() {
   // Fetch positive messages from Google Sheets — parse 3 columns independently
   const fetchPositiveMessages = useCallback(async () => {
     try {
-      const url = `/api/sheet?gid=${POSITIVE_MESSAGES_GID}`;
-      const response = await fetch(url);
+      const pools = {
+        en: { p1: [] as string[], p2: [] as string[], complete: [] as string[] },
+        th: { p1: [] as string[], p2: [] as string[], complete: [] as string[] }
+      };
+      const poolE: string[] = [];
 
-      if (!response.ok) {
-        throw new Error(`HTTP error fetching messages: ${response.status}`);
-      }
+      // Fetch from both sheets
+      await Promise.all([
+        // Sheet 1: Compound
+        (async () => {
+          try {
+            const url = `/api/sheet?gid=${MSG_SHEETS.COMPOUND}`;
+            const response = await fetch(url);
+            if (!response.ok) return;
+            let csvText = await response.text();
+            csvText = csvText.replace(/^\uFEFF/, '');
+            const rows = parseCSV(csvText);
+            if (rows.length > 0) {
+              const headers = rows[0].map(h => h.toLowerCase().trim());
+              const idx1_en = headers.indexOf('message_en_1');
+              const idx2_en = headers.indexOf('message_en_2');
+              const idx1_th = headers.indexOf('message_th_1');
+              const idx2_th = headers.indexOf('message_th_2');
+              const idxE = headers.indexOf('emoji');
 
-      let csvText = await response.text();
-      csvText = csvText.replace(/^\uFEFF/, '');
-      const rows = parseCSV(csvText);
+              for (let i = 1; i < rows.length; i++) {
+                if (idx1_en !== -1 && rows[i][idx1_en]) pools.en.p1.push(rows[i][idx1_en].trim());
+                if (idx2_en !== -1 && rows[i][idx2_en]) pools.en.p2.push(rows[i][idx2_en].trim());
+                if (idx1_th !== -1 && rows[i][idx1_th]) pools.th.p1.push(rows[i][idx1_th].trim());
+                if (idx2_th !== -1 && rows[i][idx2_th]) pools.th.p2.push(rows[i][idx2_th].trim());
+                if (idxE !== -1 && rows[i][idxE]) poolE.push(rows[i][idxE].trim());
+              }
+            }
+          } catch (e) { console.error('Error fetching Compound messages:', e); }
+        })(),
+        // Sheet 2: Complete
+        (async () => {
+          try {
+            const url = `/api/sheet?gid=${MSG_SHEETS.COMPLETE}`;
+            const response = await fetch(url);
+            if (!response.ok) return;
+            let csvText = await response.text();
+            csvText = csvText.replace(/^\uFEFF/, '');
+            const rows = parseCSV(csvText);
+            if (rows.length > 0) {
+              const headers = rows[0].map(h => h.toLowerCase().trim());
+              const idx_en = headers.indexOf('message_en');
+              const idx_th = headers.indexOf('message_th');
 
-      if (rows.length > 0) {
-        const headers = rows[0].map(h => h.toLowerCase().trim());
-        const idx1_en = headers.indexOf('message_en_1');
-        const idx2_en = headers.indexOf('message_en_2');
-        const idx1_th = headers.indexOf('message_th_1');
-        const idx2_th = headers.indexOf('message_th_2');
-        const idxE = headers.indexOf('emoji');
+              for (let i = 1; i < rows.length; i++) {
+                if (idx_en !== -1 && rows[i][idx_en]) pools.en.complete.push(rows[i][idx_en].trim());
+                if (idx_th !== -1 && rows[i][idx_th]) pools.th.complete.push(rows[i][idx_th].trim());
+              }
+            }
+          } catch (e) { console.error('Error fetching Complete messages:', e); }
+        })()
+      ]);
 
-        const pools = {
-          en: { p1: [] as string[], p2: [] as string[] },
-          th: { p1: [] as string[], p2: [] as string[] }
-        };
-        const poolE: string[] = [];
+      setMsgPools(pools);
+      setEmojiPool(poolE);
 
-        for (let i = 1; i < rows.length; i++) {
-          if (idx1_en !== -1 && rows[i][idx1_en]) pools.en.p1.push(rows[i][idx1_en].trim());
-          if (idx2_en !== -1 && rows[i][idx2_en]) pools.en.p2.push(rows[i][idx2_en].trim());
-          if (idx1_th !== -1 && rows[i][idx1_th]) pools.th.p1.push(rows[i][idx1_th].trim());
-          if (idx2_th !== -1 && rows[i][idx2_th]) pools.th.p2.push(rows[i][idx2_th].trim());
-          if (idxE !== -1 && rows[i][idxE]) poolE.push(rows[i][idxE].trim());
-        }
-
-        setMsgPools(pools);
-        setEmojiPool(poolE);
-
-        try {
-          localStorage.setItem('social-tracker-messages-cache-v3', JSON.stringify({ pools, poolE }));
-        } catch { /* ignore cache quota limits */ }
-      }
+      try {
+        localStorage.setItem('social-tracker-messages-cache-v3', JSON.stringify({ pools, poolE }));
+      } catch { /* ignore */ }
     } catch (err) {
       console.error('Failed to fetch positive messages API, attempting to load from cache...', err);
       try {
@@ -484,9 +511,6 @@ function App() {
           const parsed = JSON.parse(cached);
           if (parsed.pools) setMsgPools(parsed.pools);
           if (parsed.poolE) setEmojiPool(parsed.poolE);
-          console.log('Positive messages loaded from offline cache due to API error.');
-        } else {
-          console.log('No offline cache found for positive messages.');
         }
       } catch (cacheErr) {
         console.error('Failed to parse message cache.', cacheErr);
@@ -541,21 +565,41 @@ function App() {
 
   // Generate random positive message — 2-step: pick from each pool, then pick 1 of 4 patterns
   const generateRandomMessage = useCallback(() => {
-    const activePool = msgPools[language]?.p1?.length ? msgPools[language] : msgPools.en;
-    if (activePool.p1.length === 0 || activePool.p2.length === 0 || emojiPool.length === 0) return;
+    const activePool = (msgPools[language]?.p1?.length || msgPools[language]?.complete?.length) ? msgPools[language] : msgPools.en;
+    if (!activePool) return;
+
     const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
-    const m1 = pick(activePool.p1);
-    const m2 = pick(activePool.p2);
-    const em = pick(emojiPool);
-    const pattern = Math.floor(Math.random() * 6);
-    let sentence = '';
-    if (pattern === 0) sentence = `${m1} ${m2} ${em}`;
-    else if (pattern === 1) sentence = `${m2} ${m1} ${em}`;
-    else if (pattern === 2) sentence = `${m2} ${em} ${m1}`;
-    else if (pattern === 3) sentence = `${m1} ${em} ${m2}`;
-    else if (pattern === 4) sentence = `${em} ${m1} ${m2}`;
-    else sentence = `${em} ${m2} ${m1}`;
-    setGeneratedMessage(sentence);
+
+    // Decide strategy (50/50 if both available)
+    const canCompound = activePool.p1.length > 0 && activePool.p2.length > 0 && emojiPool.length > 0;
+    const canComplete = activePool.complete.length > 0;
+
+    let strategy: 'compound' | 'complete' = 'compound';
+    if (canCompound && canComplete) {
+      strategy = Math.random() > 0.5 ? 'compound' : 'complete';
+    } else if (canComplete) {
+      strategy = 'complete';
+    } else if (!canCompound) {
+      return; // Nothing to pick
+    }
+
+    if (strategy === 'complete') {
+      const sentence = pick(activePool.complete);
+      setGeneratedMessage(sentence);
+    } else {
+      const m1 = pick(activePool.p1);
+      const m2 = pick(activePool.p2);
+      const em = pick(emojiPool);
+      const pattern = Math.floor(Math.random() * 6);
+      let sentence = '';
+      if (pattern === 0) sentence = `${m1} ${m2} ${em}`;
+      else if (pattern === 1) sentence = `${m2} ${m1} ${em}`;
+      else if (pattern === 2) sentence = `${m2} ${em} ${m1}`;
+      else if (pattern === 3) sentence = `${m1} ${em} ${m2}`;
+      else if (pattern === 4) sentence = `${em} ${m1} ${m2}`;
+      else sentence = `${em} ${m2} ${m1}`;
+      setGeneratedMessage(sentence);
+    }
     setCopiedType(null);
   }, [msgPools, emojiPool, language]);
 
