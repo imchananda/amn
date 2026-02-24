@@ -105,6 +105,29 @@ const MSG_SHEETS = {
   COMPOUND: '211253247', // Sheet 1: Logic combining p1 + p2 + emoji
   COMPLETE: '219458934'  // Sheet 2: Logic picking a complete sentence
 };
+
+/**
+ * Parses numbers with abbreviations like 'k' or 'm' (e.g., "77.7k" -> 77700)
+ */
+const parseAbbreviatedNumber = (val: string): number => {
+  if (!val) return 0;
+  const cleanVal = val.toString().toLowerCase().trim().replace(/,/g, '');
+  if (!cleanVal) return 0;
+
+  let multiplier = 1;
+  let numericPart = cleanVal;
+
+  if (cleanVal.endsWith('k')) {
+    multiplier = 1000;
+    numericPart = cleanVal.slice(0, -1);
+  } else if (cleanVal.endsWith('m')) {
+    multiplier = 1000000;
+    numericPart = cleanVal.slice(0, -1);
+  }
+
+  const result = parseFloat(numericPart) * multiplier;
+  return isNaN(result) ? 0 : Math.round(result);
+};
 // ===========================================
 
 function App() {
@@ -393,12 +416,12 @@ function App() {
                 hashtags: getVal('hashtags') || '',
                 title: getVal('title') || getVal('note') || '',
                 focus: focusValue === 'true' || focusValue === '1' || focusValue === 'yes',
-                likes: parseInt(getVal('likes')) || 0,
-                comments: parseInt(getVal('comments')) || 0,
-                shares: parseInt(getVal('shares')) || 0,
-                reposts: parseInt(getVal('reposts')) || 0,
-                views: parseInt(getVal('view')) || parseInt(getVal('views')) || 0,
-                saves: parseInt(getVal('save')) || parseInt(getVal('saves')) || 0,
+                likes: parseAbbreviatedNumber(getVal('likes')),
+                comments: parseAbbreviatedNumber(getVal('comments')),
+                shares: parseAbbreviatedNumber(getVal('shares')),
+                reposts: parseAbbreviatedNumber(getVal('reposts')),
+                views: parseAbbreviatedNumber(getVal('view') || getVal('views')),
+                saves: parseAbbreviatedNumber(getVal('save') || getVal('saves')),
               };
               if (task.url) parsedTasks.push(task);
             }
