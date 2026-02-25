@@ -541,6 +541,25 @@ function App() {
     }
   }, [parseCSV]);
 
+  // Upgrade any old-format cached msgPools (missing 'complete' field) to prevent crashes
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem('social-tracker-messages-cache-v3');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.pools) {
+          const hasOldFormat =
+            parsed.pools.en?.complete === undefined ||
+            parsed.pools.th?.complete === undefined;
+          if (hasOldFormat) {
+            // Clear stale cache so fresh fetch runs
+            localStorage.removeItem('social-tracker-messages-cache-v3');
+          }
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   useEffect(() => {
     fetchAllData();
     fetchPositiveMessages();
@@ -605,8 +624,8 @@ function App() {
     const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
     // Decide strategy (50/50 if both available)
-    const canCompound = activePool.p1.length > 0 && activePool.p2.length > 0 && emojiPool.length > 0;
-    const canComplete = activePool.complete.length > 0;
+    const canCompound = (activePool.p1?.length ?? 0) > 0 && (activePool.p2?.length ?? 0) > 0 && emojiPool.length > 0;
+    const canComplete = (activePool.complete?.length ?? 0) > 0;
 
     let strategy: 'compound' | 'complete' = 'compound';
     if (canCompound && canComplete) {
@@ -1503,7 +1522,9 @@ function App() {
           const isFacebook = platform === 'facebook';
           const hasHashtags = !!selectedTask.hashtags && !isFacebook;
           const activePool = msgPools[language]?.p1?.length ? msgPools[language] : msgPools.en;
-          const msgReady = activePool.p1.length > 0 && activePool.p2.length > 0 && emojiPool.length > 0;
+          const msgReady =
+            ((activePool.p1?.length ?? 0) > 0 && (activePool.p2?.length ?? 0) > 0 && emojiPool.length > 0) ||
+            (activePool.complete?.length ?? 0) > 0;
 
           // Per-platform usage tips
           const tips: string[] = (() => {
