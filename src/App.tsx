@@ -408,10 +408,18 @@ function App() {
                 return idx !== -1 ? (values[idx] || '') : '';
               };
               const focusValue = getVal('focus').toLowerCase().trim();
+              let rawPlatform = (getVal('platform') || 'x').toLowerCase().trim();
+              // Normalize common variations and handle typos
+              if (['ig', 'instagram', 'insta'].includes(rawPlatform)) rawPlatform = 'instagram';
+              else if (['fb', 'facebook'].includes(rawPlatform)) rawPlatform = 'facebook';
+              else if (['tt', 'tiktok'].includes(rawPlatform)) rawPlatform = 'tiktok';
+              else if (['yt', 'youtube'].includes(rawPlatform)) rawPlatform = 'youtube';
+              else if (!['x', 'instagram', 'facebook', 'tiktok', 'youtube'].includes(rawPlatform)) rawPlatform = 'x';
+
               const task: Task = {
                 id: getVal('id') || getVal('url') || String(i),
                 phase: sheet.phase as Task['phase'],
-                platform: (getVal('platform') || 'x').toLowerCase().trim() as Task['platform'],
+                platform: rawPlatform as Task['platform'],
                 url: getVal('url') || '',
                 hashtags: getVal('hashtags') || '',
                 title: getVal('title') || getVal('note') || '',
@@ -1064,7 +1072,7 @@ function App() {
           )}
 
           {visibleTasks.map((task, index) => {
-            const config = platformConfig[task.platform];
+            const config = platformConfig[task.platform as keyof typeof platformConfig] || { color: 'from-slate-400 to-slate-500', icon: null, name: 'Unknown' };
             return (
               <div key={`${task.id}-${index}`}>
                 {(index === 0 || isTaskCompleted(task) !== isTaskCompleted(visibleTasks[index - 1])) && (
@@ -1519,6 +1527,7 @@ function App() {
       {
         selectedTask && (() => {
           const platform = selectedTask.platform;
+          const config = platformConfig[platform as keyof typeof platformConfig] || { color: 'from-slate-400 to-slate-500', icon: null, name: 'Unknown' };
           const isFacebook = platform === 'facebook';
           const hasHashtags = !!selectedTask.hashtags && !isFacebook;
           const activePool = msgPools[language]?.p1?.length ? msgPools[language] : msgPools.en;
@@ -1551,8 +1560,8 @@ function App() {
                 {/* Header */}
                 <div className="px-4 py-3 pb-2.5 flex items-center justify-between border-b border-prada-warm/60 bg-white/40">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${platformConfig[platform].color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
-                      {platformConfig[platform].icon}
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
+                      {config.icon}
                     </div>
                     <p className="text-[14px] font-bold text-prada-charcoal truncate">{selectedTask.title || t('noTitle')}</p>
                   </div>
@@ -1682,7 +1691,7 @@ function App() {
                     <div className="flex gap-2.5">
                       <button
                         onClick={() => handleGoToPost(selectedTask)}
-                        className={`flex-1 py-3.5 rounded-[14px] bg-gradient-to-r ${platformConfig[platform].color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
+                        className={`flex-1 py-3.5 rounded-[14px] bg-gradient-to-r ${config.color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
                       >
                         {t('goPost')}
                       </button>
