@@ -6,7 +6,7 @@ import AchievementPopup, { AchievementFloatingButton } from './components/Achiev
 interface Task {
   id: string;
   phase: 'pre' | 'airport' | 'show' | 'aftermath' | 'aftermath2';
-  platform: 'x' | 'instagram' | 'facebook' | 'tiktok' | 'youtube';
+  platform: 'x' | 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'threads';
   url: string;
   hashtags: string;
   title: string;
@@ -56,6 +56,12 @@ const YouTubeIcon = () => (
   </svg>
 );
 
+const ThreadsIcon = () => (
+  <svg viewBox="0 0 192 192" fill="currentColor" className="w-5 h-5">
+    <path d="M141.537 88.9883C140.71 88.5919 139.87 88.2104 139.019 87.8451C137.537 60.5382 122.616 44.905 97.5619 44.745C97.4484 44.7443 97.3355 44.7443 97.222 44.7443C82.2364 44.7443 69.7731 51.1409 62.102 62.7807L75.881 72.2328C81.6116 63.5383 90.6052 61.6848 97.2286 61.6848C97.3051 61.6848 97.3819 61.6848 97.4576 61.6855C105.707 61.7381 111.932 64.1366 115.961 68.814C118.893 72.2193 120.854 76.925 121.825 82.8638C114.511 81.6207 106.601 81.2385 98.145 81.7233C74.3247 83.0954 59.0111 96.9879 60.0396 116.292C60.5615 126.084 65.4397 134.508 73.775 140.011C80.8224 144.663 89.899 146.938 99.3323 146.423C111.79 145.74 121.563 140.987 128.381 132.305C133.506 125.625 136.685 117.133 137.997 106.507C143.4 109.607 147.128 113.932 148.697 119.498C151.194 128.404 151.032 141.101 141.208 150.601C132.605 158.926 122.244 162.646 106.064 162.765C88.3396 162.632 74.5494 157.308 65.0463 146.951C56.0809 137.181 51.4292 122.671 51.2403 103.873C51.4292 85.0754 56.0809 70.5653 65.0463 60.7954C74.5494 50.4384 88.3396 45.1138 106.064 44.981C123.925 45.1146 137.936 50.4558 147.5 60.9508L159.19 50.2968C146.856 36.9943 129.815 30.1666 106.112 30.001C88.0218 30.1334 72.336 35.5658 60.5347 46.1069C49.6617 55.7681 43.5026 69.8135 42.7867 86.8346C42.7644 87.3604 42.7534 87.8871 42.7534 88.4142C42.7534 88.9429 42.7644 89.4696 42.7867 89.9953C43.5026 107.016 49.6617 121.062 60.5347 130.723C72.336 141.264 88.0218 146.696 106.112 146.829C106.205 146.829 106.298 146.83 106.391 146.83C124.214 146.83 138.932 141.708 149.157 132.012C161.688 120.088 161.537 104.407 157.76 95.3652C155.231 89.3717 149.459 83.8547 141.537 88.9883ZM98.4405 129.507C88.0005 130.095 77.1544 125.409 76.6196 115.372C76.2232 107.93 81.9158 99.626 99.0812 98.6368C101.047 98.5234 102.976 98.468 104.871 98.468C111.106 98.468 116.939 99.0737 122.242 100.233C120.264 124.935 108.662 128.946 98.4405 129.507Z" />
+  </svg>
+);
+
 // Platform configs — muted luxury tones
 const platformConfig = {
   x: {
@@ -87,6 +93,12 @@ const platformConfig = {
     icon: <YouTubeIcon />,
     color: 'from-red-600 to-red-700',
     hoverColor: 'hover:from-red-500 hover:to-red-600',
+  },
+  threads: {
+    name: 'Threads',
+    icon: <ThreadsIcon />,
+    color: 'from-zinc-800 to-black',
+    hoverColor: 'hover:from-zinc-700 hover:to-zinc-900',
   },
 };
 
@@ -414,7 +426,8 @@ function App() {
               else if (['fb', 'facebook'].includes(rawPlatform)) rawPlatform = 'facebook';
               else if (['tt', 'tiktok'].includes(rawPlatform)) rawPlatform = 'tiktok';
               else if (['yt', 'youtube'].includes(rawPlatform)) rawPlatform = 'youtube';
-              else if (!['x', 'instagram', 'facebook', 'tiktok', 'youtube'].includes(rawPlatform)) rawPlatform = 'x';
+              else if (['threads', 'thread', 'th'].includes(rawPlatform)) rawPlatform = 'threads';
+              else if (!['x', 'instagram', 'facebook', 'tiktok', 'youtube', 'threads'].includes(rawPlatform)) rawPlatform = 'x';
 
               const task: Task = {
                 id: getVal('id') || getVal('url') || String(i),
@@ -1443,6 +1456,7 @@ function App() {
                     { id: 'instagram', label: t('igLabel'), icon: <InstagramIcon />, color: 'from-rose-400 to-purple-500' },
                     { id: 'tiktok', label: t('ttLabel'), icon: <TikTokIcon />, color: 'from-prada-charcoal to-prada-black' },
                     { id: 'x', label: t('xLabel'), icon: <XIcon />, color: 'from-slate-700 to-slate-900' },
+                    { id: 'threads', label: t('threadsLabel'), icon: <ThreadsIcon />, color: 'from-zinc-800 to-black' },
                     { id: 'facebook', label: t('fbLabel'), icon: <FacebookIcon />, color: 'from-blue-500 to-blue-700' },
                     { id: 'youtube', label: t('ytLabel'), icon: <YouTubeIcon />, color: 'from-red-500 to-red-700' },
                   ].map(p => {
@@ -1491,6 +1505,12 @@ function App() {
                         { label: t('likes'), value: stats.likes, color: 'text-rose-500', icon: likeIcon },
                         { label: t('comments'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
                         { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
+                      ];
+                    } else if (p.id === 'threads') {
+                      metrics = [
+                        { label: t('likes'), value: stats.likes, color: 'text-rose-400', icon: likeIcon },
+                        { label: t('replies'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
+                        { label: t('reposts'), value: stats.reposts, color: 'text-purple-400', icon: repostIcon },
                       ];
                     }
 
