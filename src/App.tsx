@@ -10,7 +10,7 @@ interface Task {
   url: string;
   hashtags: string;
   title: string;
-  focus: boolean;
+  focus: 0 | 1 | 2; // 0 = none, 1 = focus (⭐), 2 = hot (🔥)
   likes: number;
   comments: number;
   shares: number;
@@ -419,7 +419,11 @@ function App() {
                 const idx = headers.indexOf(headerName.toLowerCase().trim());
                 return idx !== -1 ? (values[idx] || '') : '';
               };
-              const focusValue = getVal('focus').toLowerCase().trim();
+              const focusRaw = getVal('focus').toLowerCase().trim();
+              let focusLevel: 0 | 1 | 2 = 0;
+              if (focusRaw === 'hot' || focusRaw === '2') focusLevel = 2;
+              else if (focusRaw === 'focus' || focusRaw === 'true' || focusRaw === '1' || focusRaw === 'yes') focusLevel = 1;
+
               let rawPlatform = (getVal('platform') || 'x').toLowerCase().trim();
               // Normalize common variations and handle typos
               if (['ig', 'instagram', 'insta'].includes(rawPlatform)) rawPlatform = 'instagram';
@@ -436,7 +440,7 @@ function App() {
                 url: getVal('url') || '',
                 hashtags: getVal('hashtags') || '',
                 title: getVal('title') || getVal('note') || '',
-                focus: focusValue === 'true' || focusValue === '1' || focusValue === 'yes',
+                focus: focusLevel,
                 likes: parseAbbreviatedNumber(getVal('likes')),
                 comments: parseAbbreviatedNumber(getVal('comments')),
                 shares: parseAbbreviatedNumber(getVal('shares')),
@@ -611,9 +615,9 @@ function App() {
     const pending = result.filter(t => !isTaskCompleted(t));
     const done = result.filter(t => isTaskCompleted(t));
 
-    // Sort: Focus posts first. Original array is already newest-to-oldest, so returning 0 keeps that order.
+    // Sort: HOT (2) first, then Focus (1), then normal (0). Stable within each tier.
     const sortTasks = (a: Task, b: Task) => {
-      if (a.focus !== b.focus) return b.focus ? 1 : -1;
+      if (b.focus !== a.focus) return b.focus - a.focus;
       return 0;
     };
 
@@ -1099,11 +1103,13 @@ function App() {
 
                 <div
                   onClick={() => setSelectedTask(task)}
-                  className={`flex items-center gap-2 bg-prada-offwhite rounded-2xl py-2.5 px-3 mb-1.5 border cursor-pointer hover:shadow-md transition-all group animate-in fade-in slide-in-from-bottom-4 duration-300 ${isTaskCompleted(task)
-                    ? 'border-prada-warm/50 opacity-60 grayscale-[0.3]'
-                    : task.focus
-                      ? 'border-prada-warm bg-prada-warm/10 shadow-sm relative overflow-hidden'
-                      : 'border-prada-warm/50'
+                  className={`flex items-center gap-2 rounded-2xl py-2.5 px-3 mb-1.5 border cursor-pointer hover:shadow-md transition-all group animate-in fade-in slide-in-from-bottom-4 duration-300 ${isTaskCompleted(task)
+                      ? 'bg-prada-offwhite border-prada-warm/50 opacity-60 grayscale-[0.3]'
+                      : task.focus === 2
+                        ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-400 shadow-md shadow-orange-200/60 relative overflow-hidden'
+                        : task.focus === 1
+                          ? 'bg-prada-offwhite border-prada-warm bg-prada-warm/10 shadow-sm relative overflow-hidden'
+                          : 'bg-prada-offwhite border-prada-warm/50'
                     }`}
                   style={{ animationDelay: `${(index % 10) * 50}ms` }}
                 >
@@ -1118,8 +1124,13 @@ function App() {
                       <span className="text-[13px] font-medium text-prada-charcoal/90 truncate">
                         {task.title || t('noTitle')}
                       </span>
-                      {task.focus && !isTaskCompleted(task) && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-prada-gold to-prada-darkgold text-white rounded-full flex-shrink-0 animate-pulse">
+                      {task.focus === 2 && !isTaskCompleted(task) && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full flex-shrink-0 animate-pulse shadow-sm shadow-orange-400/50">
+                          {t('hotBadge')}
+                        </span>
+                      )}
+                      {task.focus === 1 && !isTaskCompleted(task) && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-prada-gold to-prada-darkgold text-white rounded-full flex-shrink-0">
                           {t('focusBadge')}
                         </span>
                       )}

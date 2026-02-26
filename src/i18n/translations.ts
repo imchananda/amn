@@ -64,6 +64,7 @@ export const translations = {
 
         // Focus
         focusBadge: '⭐ สำคัญ',
+        hotBadge: '🔥 HOT',
 
         // Compact Copy Buttons
         copyMsgBtn: 'คัดลอกข้อความ',
@@ -211,6 +212,7 @@ export const translations = {
 
         // Focus
         focusBadge: '⭐ Focus',
+        hotBadge: '🔥 HOT',
 
         // Compact Copy Buttons
         copyMsgBtn: 'Copy Message',
