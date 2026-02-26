@@ -283,6 +283,7 @@ function App() {
     map['instagram'] = getPlatformStats('instagram');
     map['tiktok'] = getPlatformStats('tiktok');
     map['x'] = getPlatformStats('x');
+    map['threads'] = getPlatformStats('threads');
     map['facebook'] = getPlatformStats('facebook');
     map['youtube'] = getPlatformStats('youtube');
     return map;
@@ -1104,12 +1105,12 @@ function App() {
                 <div
                   onClick={() => setSelectedTask(task)}
                   className={`flex items-center gap-2 rounded-2xl py-2.5 px-3 mb-1.5 border cursor-pointer hover:shadow-md transition-all group animate-in fade-in slide-in-from-bottom-4 duration-300 ${isTaskCompleted(task)
-                      ? 'bg-prada-offwhite border-prada-warm/50 opacity-60 grayscale-[0.3]'
-                      : task.focus === 2
-                        ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-400 shadow-md shadow-orange-200/60 relative overflow-hidden'
-                        : task.focus === 1
-                          ? 'bg-prada-offwhite border-prada-warm bg-prada-warm/10 shadow-sm relative overflow-hidden'
-                          : 'bg-prada-offwhite border-prada-warm/50'
+                    ? 'bg-prada-offwhite border-prada-warm/50 opacity-60 grayscale-[0.3]'
+                    : task.focus === 2
+                      ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-400 shadow-md shadow-orange-200/60 relative overflow-hidden'
+                      : task.focus === 1
+                        ? 'bg-prada-offwhite border-prada-warm bg-prada-warm/10 shadow-sm relative overflow-hidden'
+                        : 'bg-prada-offwhite border-prada-warm/50'
                     }`}
                   style={{ animationDelay: `${(index % 10) * 50}ms` }}
                 >
