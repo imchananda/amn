@@ -19,6 +19,14 @@ export default defineConfig(({ mode }) => {
             const sheetId = env.SHEET_ID || '1_MYS-pKcUNguQ4NNcYPU7sXQya9SioubuPFyRxV9_6s';
             return `/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
           }
+        },
+        '/api/gdrive': {
+          target: 'https://lh3.googleusercontent.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/gdrive/, ''),
+          headers: {
+            'Referer': 'https://drive.google.com',
+          }
         }
       }
     }

@@ -4,6 +4,10 @@ export const translations = {
     th: {
         // Header
         appTitle: 'Prada Princess 👑',
+        featuredEngagementTitle: "ยายเดือน บูส บูส! 🚀",
+        featuredEngagementToggle: 'บูสๆ 🚀',
+        importantMediaTitle: 'รายชื่อสื่อแฟชั่น 🌟',
+        importantMediaToggle: 'โฟกัสสื่อ',
         all: 'ทั้งหมด',
         hide: '✓ ซ่อน',
         show: '○ แสดง',
@@ -19,9 +23,14 @@ export const translations = {
         completed: 'เสร็จสมบูรณ์',
 
         // Task list
+        tasks: 'ภารกิจทั้งหมด',
         noTitle: 'ไม่มีชื่อเรื่อง',
         scrollToLoad: 'เลื่อนเพื่อโหลดเพิ่ม...',
         noTasks: 'ยังไม่มีรายการ',
+        missionCount: 'ภารกิจทั้งหมด',
+        missionCountUnit: 'รายการ',
+        noBoostPosts: 'ไม่มีโพสต์ที่ต้องบูส (ใส่ boost=x ในชีตก่อนนะ)',
+        totalEngagementLabel: 'รวมทั้งหมด',
         allDone: 'ทำครบหมดแล้ว!',
         summary: 'สรุปยอด',
         globalStats: 'ยอดรวมทุกแพลตฟอร์ม',
@@ -114,8 +123,8 @@ export const translations = {
         phaseAirportDesc: '24 - 25 ก.พ. (เดินทาง/สนามบิน)',
         phaseShowDesc: '26 ก.พ. (วันโชว์หลัก)',
         phaseAftermathDesc: '27 ก.พ. - 9 มี.ค. (เก็บตก/Aftermath)',
-        tapToHide: 'คลิกเพื่อย่อ',
-        tapToExpand: 'คลิกเพื่อดูสถิติ',
+        tapToHide: 'ซ่อนภารกิจ',
+        tapToExpand: 'คลิกเพื่อดูภารกิจสำคัญ 🔥',
         dashboardTip: '✦ ทิป: คลิกเพื่อสลับมุมมอง',
 
         // Short Phrases
@@ -152,6 +161,10 @@ export const translations = {
     en: {
         // Header
         appTitle: 'Prada Princess 👑',
+        featuredEngagementTitle: "Let’s Hit the Goal Together! 🔥",
+        featuredEngagementToggle: 'Boost 🚀',
+        importantMediaTitle: 'Fashion Media Priority List 🌟',
+        importantMediaToggle: 'Focused Media',
         all: 'All',
         hide: '✓ Hide',
         show: '○ Show',
@@ -167,9 +180,14 @@ export const translations = {
         completed: 'Completed',
 
         // Task list
+        tasks: 'All Missions',
         noTitle: 'No title',
         scrollToLoad: 'Scroll to load more...',
         noTasks: 'No tasks yet',
+        missionCount: 'Total missions',
+        missionCountUnit: 'posts',
+        noBoostPosts: 'No boost posts found (add boost=x in sheet)',
+        totalEngagementLabel: 'Total',
         allDone: 'All done!',
         summary: 'Summary',
         globalStats: 'Global Platform Stats',

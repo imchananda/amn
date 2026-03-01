@@ -15,8 +15,18 @@ interface Task {
   comments: number;
   shares: number;
   reposts: number;
-  views: number;
-  saves: number;
+  views?: number;
+  saves?: number;
+  target?: number; // total goal
+  targetLikes?: number;
+  targetComments?: number;
+  targetShares?: number;
+  targetReposts?: number;
+  targetSaves?: number;
+  targetViews?: number;
+  image?: string;
+  imageFileId?: string;
+  boost?: number[]; // [] or [1] or [2] or [1,2]
 }
 
 interface CompletedState {
@@ -34,7 +44,7 @@ const XIcon = () => (
 
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644-.07-4.85-.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
   </svg>
 );
 
@@ -140,6 +150,33 @@ const parseAbbreviatedNumber = (val: string): number => {
   const result = parseFloat(numericPart) * multiplier;
   return isNaN(result) ? 0 : Math.round(result);
 };
+
+/**
+ * Extracts a Google Drive file ID from a share link.
+ * Supports: /file/d/ID/view and /open?id=ID formats.
+ */
+const extractGDriveId = (url: string): string => {
+  if (!url) return '';
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) return fileMatch[1];
+  const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (idMatch) return idMatch[1];
+  return '';
+};
+
+/**
+ * Returns the most reliable direct image URL for a Google Drive file.
+ * In dev, routes through /api/gdrive proxy to bypass CORS.
+ * In production, uses lh3 CDN directly.
+ */
+const gdriveImageUrl = (fileId: string): string =>
+  fileId ? `/api/gdrive/d/${fileId}` : '';
+
+const gdriveFallbackUrl = (fileId: string): string =>
+  fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w600` : '';
+
+const gdriveUcUrl = (fileId: string): string =>
+  fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : '';
 // ===========================================
 
 function App() {
@@ -168,21 +205,24 @@ function App() {
     return {};
   });
 
-  const [filterPlatform, setFilterPlatform] = useState<string | null>(null);
-  const [showGlobalStats, setShowGlobalStats] = useState(true);
+  const [featuredFilterPlatform, setFeaturedFilterPlatform] = useState<string | null>(null);
+  const [taskFilterPlatform, setTaskFilterPlatform] = useState<string | null>(null);
 
   // Ref for the main scrollable container
   const mainRef = useRef<HTMLElement>(null);
 
   // Phase and Stats State
   const [activePhase, setActivePhase] = useState<'all' | 'pre' | 'airport' | 'show' | 'aftermath'>('all');
-  const [statsPeriod, setStatsPeriod] = useState<'emv' | 'miv'>('miv');
+  const [statsPeriod] = useState<'emv' | 'miv'>('miv');
+  const [summaryModalPeriod, setSummaryModalPeriod] = useState<'emv' | 'miv'>('miv');
 
   const [visibleCount, setVisibleCount] = useState(30);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showPlatformSummaryModal, setShowPlatformSummaryModal] = useState(false);
-  // Achievement popup states (Global)
+  const [selectedMediaTitleFilter, setSelectedMediaTitleFilter] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<'tasks' | 'boost' | 'important' | null>('boost');  // Achievement popup states (Global)
+  const [showMarkDone, setShowMarkDone] = useState(true);
   const [showAchievement, setShowAchievement] = useState(false);
   const [achievementUnlocked, setAchievementUnlocked] = useState(() => {
     try {
@@ -430,6 +470,29 @@ function App() {
                 reposts: parseAbbreviatedNumber(getVal('reposts')),
                 views: parseAbbreviatedNumber(getVal('view') || getVal('views')),
                 saves: parseAbbreviatedNumber(getVal('save') || getVal('saves')),
+                target: parseAbbreviatedNumber(getVal('target') || getVal('goal') || '0'),
+                targetLikes: parseAbbreviatedNumber(getVal('target_likes') || getVal('targetlikes') || '0'),
+                targetComments: parseAbbreviatedNumber(getVal('target_comments') || getVal('targetcomments') || '0'),
+                targetShares: parseAbbreviatedNumber(getVal('target_shares') || getVal('targetshares') || '0'),
+                targetReposts: parseAbbreviatedNumber(getVal('target_reposts') || getVal('targetreposts') || '0'),
+                targetSaves: parseAbbreviatedNumber(getVal('target_saves') || getVal('targetsaves') || '0'),
+                targetViews: parseAbbreviatedNumber(getVal('target_views') || getVal('targetviews') || '0'),
+                image: (() => {
+                  const rawImg = getVal('image') || getVal('img') || getVal('picture') || '';
+                  const fileId = extractGDriveId(rawImg);
+                  return fileId ? gdriveImageUrl(fileId) : rawImg;
+                })(),
+                imageFileId: (() => {
+                  const rawImg = getVal('image') || getVal('img') || getVal('picture') || '';
+                  return extractGDriveId(rawImg);
+                })(),
+                boost: (() => {
+                  const v = (getVal('boost') || getVal('featured') || getVal('highlight') || '').trim();
+                  const result: number[] = [];
+                  if (v.includes('1') || v.toLowerCase() === 'x' || v.toLowerCase() === 'yes' || v.toLowerCase() === 'true') result.push(1);
+                  if (v.includes('2')) result.push(2);
+                  return result;
+                })(),
               };
               if (task.url) parsedTasks.push(task);
             }
@@ -592,8 +655,8 @@ function App() {
   // Filter and sort tasks (Focus first, then maintain original newest-to-oldest order)
   const filteredTasks = useMemo(() => {
     let result = tasks;
-    if (filterPlatform) {
-      result = result.filter(t => t.platform === filterPlatform);
+    if (taskFilterPlatform) {
+      result = result.filter(t => t.platform === taskFilterPlatform);
     }
     const pending = result.filter(t => !isTaskCompleted(t));
     const done = result.filter(t => isTaskCompleted(t));
@@ -607,7 +670,7 @@ function App() {
     const sortedPending = [...pending].sort(sortTasks);
     const sortedDone = [...done].sort(sortTasks);
     return [...sortedPending, ...sortedDone];
-  }, [tasks, isTaskCompleted, filterPlatform]);
+  }, [tasks, isTaskCompleted, taskFilterPlatform]);
 
   // Lazy load
   const visibleTasks = useMemo(() => {
@@ -787,10 +850,10 @@ function App() {
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23000000' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
       }} />
 
-      {/* Left-aligned background image */}
-      {/* <div className="fixed bottom-0 left-0 z-0 pointer-events-none w-[45vw] sm:w-[35vw] max-w-[400px] opacity-15 sm:opacity-25 transition-opacity">
-        <img src="/nt-2.png" alt="" className="w-full h-auto object-contain object-left-bottom" />
-      </div> */}
+      {/* Background image anchored to the bottom middle with height constraints */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-0 pointer-events-none pb-0 sm:pb-4 flex justify-center items-end opacity-90 transition-opacity w-full overflow-hidden">
+        <img src="/nt-3.png" alt="" className="w-auto h-auto max-w-[95vw] sm:max-w-[70vw] max-h-[60vh] sm:max-h-[70vh] object-contain object-bottom" />
+      </div>
 
       {/* Header Container (Fixed at top) */}
       <div className="relative z-40 flex-shrink-0 bg-prada-offwhite">
@@ -844,9 +907,8 @@ function App() {
             </div>
           </div>
 
-          {/* Navigation & Timeline Area */}
+          {/* Phase Filters - Compact & Meaningful */}
           <div className="bg-white/40 backdrop-blur-md">
-            {/* Phase Filters - Compact & Meaningful */}
             <div className="w-full max-w-lg mx-auto px-2 pt-1 pb-2 grid grid-cols-5 gap-1.5">
               {[
                 { id: 'all', icon: '✦', label: t('allLabel'), desc: t('sixteenDaysShort'), days: [] },
@@ -877,51 +939,66 @@ function App() {
             </div>
           </div>
 
-          {/* Filter chips + Refresh + Hide */}
-          <div className="max-w-lg mx-auto px-4">
-            <div className="flex justify-center gap-2 items-center pt-1 pb-2">
-              <button
-                onClick={() => setFilterPlatform(null)}
-                className={`w-[34px] h-[34px] sm:w-9 sm:h-9 rounded-full flex-shrink-0 text-[9.5px] sm:text-[10.5px] font-bold border transition-transform flex items-center justify-center shadow-sm ${!filterPlatform
-                  ? 'bg-prada-charcoal border-transparent text-prada-offwhite scale-110'
-                  : 'bg-white/80 border-prada-warm/50 text-prada-charcoal/70 hover:bg-prada-cream/80 hover:scale-105'
-                  }`}
-              >
-                {t('allLabel')}
-              </button>
-
-              <div className="flex gap-1.5 items-center">
-                {(['instagram', 'tiktok', 'x', 'facebook', 'youtube'] as const).map(p => {
-                  const isActive = filterPlatform === p;
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => setFilterPlatform(isActive ? null : p)}
-                      className={`w-[34px] h-[34px] sm:w-9 sm:h-9 rounded-full flex-shrink-0 text-sm font-medium border transition-transform flex items-center justify-center shadow-sm ${isActive
-                        ? `bg-gradient-to-br ${platformConfig[p].color} border-transparent text-white scale-110`
-                        : 'bg-white/80 border-prada-warm/50 text-prada-charcoal/60 hover:bg-prada-cream/80 hover:scale-105'
-                        }`}
-                    >
-                      {platformConfig[p].icon}
-                    </button>
-                  );
-                })}
-
-                {!showGlobalStats && (
+          {/* Expand Toggle Buttons Header Area */}
+          <div className="max-w-lg mx-auto px-4 pb-2">
+            <div className="flex justify-center gap-3 items-center pt-1">
+              {totalTasksList.length > 0 && !loading && !error && (
+                <>
                   <button
                     onClick={() => {
-                      setShowGlobalStats(true);
-                      setTimeout(() => {
-                        mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-                      }, 50);
+                      setActiveSection(prev => prev === 'tasks' ? null : 'tasks');
+                      if (activeSection !== 'tasks') {
+                        setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+                      }
                     }}
-                    className="ml-auto px-3.5 h-8 rounded-full flex items-center gap-2 bg-prada-charcoal text-white shadow-lg shadow-black/10 transition-all hover:scale-105 active:scale-95 group animate-in fade-in slide-in-from-right-4 relative z-50"
+                    className={`px-4 h-8 rounded-full flex items-center gap-2 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'tasks'
+                      ? 'bg-[#E35D6A] text-white border-transparent shadow-[#E35D6A]/20'
+                      : 'bg-white/80 backdrop-blur-md text-[#E35D6A] border-[#E35D6A]/40 shadow-sm hover:bg-white/90 shadow-[#E35D6A]/10 hover:scale-105'
+                      }`}
                   >
-                    <span className="text-[10px] animate-pulse">✦</span>
-                    <span className="text-[8.5px] font-bold uppercase tracking-wider">{t('tapToExpand')}</span>
+                    <span className={`text-[10px] ${activeSection === 'tasks' ? 'animate-pulse' : ''} transition-transform`}>
+                      {activeSection === 'tasks' ? '✦' : '✧'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider">{t('tasks') || 'Tasks'}</span>
                   </button>
-                )}
-              </div>
+
+                  <button
+                    onClick={() => {
+                      setActiveSection(prev => prev === 'boost' ? null : 'boost');
+                      if (activeSection !== 'boost') {
+                        setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+                      }
+                    }}
+                    className={`px-4 h-8 rounded-full flex items-center gap-2 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'boost'
+                      ? 'bg-[#E35D6A] text-white border-transparent shadow-[#E35D6A]/20'
+                      : 'bg-white/80 backdrop-blur-md text-[#E35D6A] border-[#E35D6A]/40 shadow-sm hover:bg-white/90 shadow-[#E35D6A]/10 hover:scale-105'
+                      }`}
+                  >
+                    <span className={`text-[10px] ${activeSection === 'boost' ? 'animate-pulse' : ''} transition-transform`}>
+                      {activeSection === 'boost' ? '✦' : '🔥'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider">{t('featuredEngagementToggle') || 'Engagement'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveSection(prev => prev === 'important' ? null : 'important');
+                      if (activeSection !== 'important') {
+                        setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+                      }
+                    }}
+                    className={`px-4 h-8 rounded-full flex items-center gap-2 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'important'
+                      ? 'bg-[#E35D6A] text-white border-transparent shadow-[#E35D6A]/20'
+                      : 'bg-white/80 backdrop-blur-md text-[#E35D6A] border-[#E35D6A]/40 shadow-sm hover:bg-white/90 shadow-[#E35D6A]/10 hover:scale-105'
+                      }`}
+                  >
+                    <span className={`text-[10px] ${activeSection === 'important' ? 'animate-pulse' : ''} transition-transform`}>
+                      {activeSection === 'important' ? '✦' : '⭐'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider">{t('importantMediaToggle') || 'Important'}</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -935,130 +1012,465 @@ function App() {
       >
         <div className="max-w-lg mx-auto flex flex-col gap-1 px-3 pt-4 pb-2">
 
-          {/* Mission Impact Stats Card */}
-          {totalTasksList.length > 0 && !loading && !error && showGlobalStats && (
-            <div className="mb-1 animate-in fade-in zoom-in-95 duration-500">
-              <div className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-4 sm:p-5 mx-0 border border-prada-warm/30 shadow-2xl shadow-black/5 relative overflow-hidden group">
-                {/* Decorative background - white hazy glow */}
-                <div className="absolute top-0 right-0 -mr-12 -mt-12 w-32 h-32 bg-white/50 rounded-full blur-2xl pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-32 h-32 bg-white/30 rounded-full blur-2xl pointer-events-none"></div>
-
-                {/* Header area */}
-                <div className="flex items-start justify-between relative z-10 mb-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-prada-warm/25 flex items-center justify-center text-prada-charcoal border border-prada-warm/40 shadow-sm">
-                        <span className="text-base">✨</span>
-                      </div>
-                      <div>
-                        <h2 className="text-sm font-bold text-prada-charcoal tracking-tight leading-none">
-                          {t('globalStats')}
-                        </h2>
-                        <p className="text-[8px] font-bold text-prada-charcoal/60 tracking-widest uppercase mt-1">
-                          {t('sixteenDays')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1">
-                    <button
-                      onClick={() => setShowGlobalStats(false)}
-                      className="w-7 h-7 rounded-lg bg-prada-warm/25 text-prada-charcoal border border-prada-warm/40 shadow-sm hover:bg-prada-warm/40 active:scale-95 flex items-center justify-center"
-                      title={t('minimize')}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3 h-3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                      </svg>
-                    </button>
-                    <span className="text-[6.5px] font-bold text-prada-charcoal/50 uppercase tracking-[0.1em] animate-pulse text-center leading-tight">
-                      {t('tapToHide')}
-                    </span>
-                  </div>
+          {/* Platform Engagement Card (Individual Featured Posts) */}
+          {totalTasksList.length > 0 && !loading && !error && activeSection === 'boost' && (
+            <div className="mb-2 animate-in fade-in zoom-in-95 duration-500">
+              <div className="bg-white/80 rounded-[2rem] p-4 sm:p-5 mx-0 border border-prada-warm/30 shadow-2xl shadow-black/5 relative group">
+                {/* Decorative glow */}
+                <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
+                  <div className="absolute top-0 right-0 -mr-10 -mt-10 w-28 h-28 bg-prada-warm/25 rounded-full blur-2xl pointer-events-none" />
                 </div>
 
-                {/* Main Content Area - mobile: stack vertically; sm+: rail left, stats right */}
-                <div className="relative z-10">
-                  <div className="flex flex-col sm:flex-row gap-3 sm:items-stretch">
-                    {/* Mode Toggle: horizontal on mobile, vertical rail on sm+ */}
-                    <div className="flex flex-row sm:flex-col gap-2 sm:w-[96px] flex-shrink-0">
-                      <button
-                        onClick={() => setStatsPeriod('miv')}
-                        className={`flex-1 sm:flex-none sm:h-12 rounded-full px-3 py-2.5 sm:px-3.5 sm:py-0 flex flex-col items-center justify-center text-[10px] font-bold tracking-[0.14em] uppercase min-w-0 ${statsPeriod === 'miv'
-                          ? 'bg-prada-charcoal text-white shadow-md shadow-black/15'
-                          : 'bg-white/80 text-prada-charcoal/70 border border-prada-warm/30'
-                          }`}
-                      >
-                        <span className="text-[11px] sm:text-[13px] font-bold leading-none">MIV</span>
-                        <span className="text-[6.5px] sm:text-[7.5px] font-medium mt-0.5 tracking-[0.12em] whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-                          22 FEB - 9 MAR
+                <div className="relative z-10 flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex flex-col gap-2 w-full">
+                    {/* Title Row */}
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        <span className="text-[#C53A4B] text-sm sm:text-base leading-none">✦</span>
+                        <h3 className="text-[10px] sm:text-xs font-bold text-[#C53A4B] uppercase tracking-[0.15em] whitespace-nowrap">{t('featuredEngagementTitle') || 'Featured Engagement'}</h3>
+                      </div>
+                      {/* Minimize button — always visible top-right */}
+                      <div className="flex flex-col items-center shrink-0">
+                        <button
+                          onClick={() => setActiveSection(null)}
+                          className="w-7 h-7 rounded-full bg-[#C53A4B]/10 text-[#C53A4B] border border-[#C53A4B]/20 shadow-sm hover:bg-[#C53A4B]/20 active:scale-95 flex items-center justify-center transition-colors"
+                          title={t('minimize')}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </button>
+                        <span className="text-[6px] font-bold text-[#C53A4B]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                          {t('tapToHide')}
                         </span>
-                      </button>
-                      <button
-                        onClick={() => setStatsPeriod('emv')}
-                        className={`flex-1 sm:flex-none sm:h-12 rounded-full px-3 py-2.5 sm:px-3.5 sm:py-0 flex flex-col items-center justify-center text-[10px] font-bold tracking-[0.14em] uppercase min-w-0 ${statsPeriod === 'emv'
-                          ? 'bg-prada-charcoal text-white shadow-md shadow-black/15'
-                          : 'bg-white/80 text-prada-charcoal/70 border border-prada-warm/30'
-                          }`}
-                      >
-                        <span className="text-[11px] sm:text-[13px] font-bold leading-none">EMV</span>
-                        <span className="text-[6.5px] sm:text-[7.5px] font-medium mt-0.5 tracking-[0.12em] whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-                          24 FEB - 2 MAR
-                        </span>
-                      </button>
+                      </div>
                     </div>
 
-                    {(() => {
-                      const statCards = [
-                        { labelLines: [t('commentsLabel'), t('replies')], value: dashboardStats.comments, icon: <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /> },
-                        { labelLines: [t('sharesLabel'), t('quotesWord'), t('reposts')], value: dashboardStats.shares + dashboardStats.reposts, icon: <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" /> },
-                        { labelLines: [t('savesLabel')], value: dashboardStats.saves, icon: <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" /> },
-                        { labelLines: [t('viewsLabel')], value: dashboardStats.views, icon: <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /> },
-                      ];
-                      return (
-                        <div className="flex-1 min-w-0 space-y-3">
-                          {/* Top card: icon left, number + label right */}
-                          <div className="bg-white rounded-[1.25rem] py-4 px-4 sm:px-5 border border-prada-warm/25 shadow-md shadow-black/5 flex items-center justify-between gap-3 min-h-[4rem]">
-                            <div className="text-prada-charcoal flex-shrink-0">
-                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 sm:w-8 sm:h-8"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                    {/* Filter Row — full width below title */}
+                    <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pb-1 mt-1">
+                      <button
+                        onClick={() => setFeaturedFilterPlatform(null)}
+                        className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!featuredFilterPlatform
+                          ? 'bg-[#C53A4B] border-transparent text-white'
+                          : 'bg-white border-[#C53A4B]/30 text-[#C53A4B]/70 hover:bg-[#C53A4B]/10'
+                          }`}
+                      >
+                        {t('allLabel') || 'All'}
+                      </button>
+                      {(['instagram', 'tiktok', 'x', 'facebook', 'youtube'] as const).map(p => {
+                        const isActive = featuredFilterPlatform === p;
+                        return (
+                          <button
+                            key={p}
+                            onClick={() => setFeaturedFilterPlatform(isActive ? null : p)}
+                            className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
+                              ? 'bg-white border-[#C53A4B] text-[#C53A4B]'
+                              : 'bg-white border-[#C53A4B]/30 text-[#C53A4B]/50 hover:border-[#C53A4B]/60 hover:text-[#C53A4B]/80'
+                              }`}
+                          >
+                            <div className="w-4 h-4 text-current flex items-center justify-center">
+                              {platformConfig[p].icon}
                             </div>
-                            <div className="flex flex-col items-end text-right min-w-0">
-                              <span className="text-2xl sm:text-3xl font-bold text-prada-charcoal tabular-nums leading-none">
-                                {dashboardStats.likes.toLocaleString()}
-                              </span>
-                              <span className="text-xs font-medium text-prada-charcoal/60 mt-0.5">
-                                {t('totalLikesLabel')}
-                              </span>
-                            </div>
-                          </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                          {/* 2x2 grid: icon left, number + label right */}
-                          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 min-w-0">
-                            {statCards.map((item, idx) => (
+                  {/* Featured Posts List */}
+                  <div className="flex flex-col gap-3" key={`featured-list-${featuredFilterPlatform || 'all'}-${activePhase}`}>
+                    {(() => {
+                      // Get all posts marked as featured in the sheet (boost = 1)
+                      const featuredPosts = totalTasksList.filter(t =>
+                        t.boost?.includes(1) &&
+                        (!featuredFilterPlatform || t.platform === featuredFilterPlatform) &&
+                        (activePhase === 'all' || t.phase === activePhase || (activePhase === 'aftermath' && t.phase === 'aftermath2'))
+                      ).sort((a, b) => {
+                        const getSum = (t: typeof a) => t.likes + t.comments + t.shares + t.reposts + (t.saves || 0) + (t.views || 0);
+                        const getTargetSum = (t: typeof a) => (t.targetLikes || 0) + (t.targetComments || 0) + (t.targetShares || 0) + (t.targetReposts || 0) + (t.targetSaves || 0) + (t.targetViews || 0);
+
+                        const aTarget = getTargetSum(a) || a.target || 1;
+                        const bTarget = getTargetSum(b) || b.target || 1;
+
+                        const aDone = getSum(a) >= aTarget ? 1 : 0;
+                        const bDone = getSum(b) >= bTarget ? 1 : 0;
+
+                        return aDone - bDone;
+                      }).slice(0, 100);
+
+                      if (featuredPosts.length === 0) {
+                        return <div className="text-center text-xs text-prada-taupe/60 italic py-4">{t('noBoostPosts')}</div>;
+                      }
+
+                      return (
+                        <>
+                          {/* Summary Bar */}
+                          <div className="flex items-center justify-between px-1 pb-1 border-b border-[#C53A4B]/10 mb-1">
+                            <span className="text-[10px] text-prada-taupe/60">
+                              {t('missionCount')}
+                            </span>
+                            <span className="text-[11px] font-bold text-[#C53A4B]">
+                              {featuredPosts.length} {t('missionCountUnit')}
+                            </span>
+                          </div>
+                          {featuredPosts.map((post, idx) => {
+                            const iconPlatform = platformConfig[post.platform as keyof typeof platformConfig];
+                            const totalEngagement = post.likes + post.comments + post.shares + post.reposts + (post.saves ?? 0) + (post.views ?? 0);
+                            const target = post.target || 1;
+                            const pct = Math.min((totalEngagement / target) * 100, 100);
+
+                            return (
                               <div
-                                key={idx}
-                                className="bg-white rounded-[1.15rem] py-3.5 px-3.5 sm:px-4 border border-prada-warm/25 shadow-md shadow-black/5 flex items-center justify-between gap-2 min-w-0 min-h-[4rem]"
+                                key={post.id || idx}
+                                onClick={() => { setSelectedTask(post); setShowMarkDone(false); setGeneratedMessage(''); }}
+                                className="flex shrink-0 bg-white rounded-2xl overflow-hidden border border-prada-warm/20 shadow-sm hover:shadow-lg hover:border-prada-gold/40 transition-all active:scale-[0.98] group/post cursor-pointer"
                               >
-                                <div className="text-prada-charcoal flex-shrink-0">
-                                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6">{item.icon}</svg>
+                                {/* Left: Thumbnail panel */}
+                                <div className={`w-28 sm:w-36 shrink-0 flex flex-col items-center justify-center bg-gradient-to-br ${iconPlatform?.color || 'from-gray-400 to-gray-600'} relative overflow-hidden`}>
+                                  {post.image ? (
+                                    <img
+                                      src={post.image}
+                                      alt={post.title || post.platform}
+                                      className="absolute inset-0 w-full h-full object-cover"
+                                      referrerPolicy="no-referrer"
+                                      crossOrigin="anonymous"
+                                      onError={(e) => {
+                                        const img = e.currentTarget as HTMLImageElement;
+                                        const fallback1 = post.imageFileId ? gdriveFallbackUrl(post.imageFileId) : '';
+                                        const fallback2 = post.imageFileId ? gdriveUcUrl(post.imageFileId) : '';
+                                        if (fallback1 && img.src !== fallback1 && !img.src.includes('thumbnail')) {
+                                          img.src = fallback1;
+                                        } else if (fallback2 && img.src !== fallback2 && !img.src.includes('uc?export')) {
+                                          img.src = fallback2;
+                                        } else {
+                                          img.style.display = 'none';
+                                        }
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className="absolute inset-0 bg-black/10" />
+                                  <div className={`relative z-10 text-white/80 text-3xl sm:text-4xl ${post.image ? 'opacity-0' : 'opacity-60'}`}>
+                                    {iconPlatform?.icon || <span className="text-2xl font-bold">{post.platform[0]?.toUpperCase()}</span>}
+                                  </div>
+                                  {/* External link icon on hover */}
+                                  <div className="absolute top-2 right-2 opacity-0 group-hover/post:opacity-70 transition-opacity z-20">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" className="w-3.5 h-3.5">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                    </svg>
+                                  </div>
                                 </div>
-                                <div className="flex flex-col items-end text-right min-w-0">
-                                  <span className="text-lg sm:text-xl font-bold text-prada-charcoal tabular-nums leading-none">
-                                    {item.value.toLocaleString()}
-                                  </span>
-                                  <p className="text-[11px] sm:text-xs font-medium text-prada-charcoal/60 leading-tight line-clamp-2 mt-0.5">
-                                    {item.labelLines.join(' ')}
-                                  </p>
+
+                                {/* Right: Info & Metrics panel */}
+                                <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col gap-2">
+                                  {/* Post Header */}
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br ${iconPlatform?.color || 'from-gray-400 to-gray-600'} text-white shadow-sm`}>
+                                      <div className="w-3.5 h-3.5 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{iconPlatform?.icon}</div>
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-[11px] font-bold text-prada-charcoal truncate leading-tight">
+                                        {post.title || `${post.platform} Post`}
+                                      </span>
+                                      <span className="text-[9px] text-prada-taupe/70 uppercase tracking-widest leading-tight">
+                                        {iconPlatform?.name || post.platform}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Per-Metric Rows */}
+                                  <div className="flex flex-col gap-1.5">
+                                    {([
+                                      { key: 'likes', label: t('likes'), value: post.likes, targetVal: post.targetLikes, icon: '❤️' },
+                                      { key: 'comments', label: t('comments'), value: post.comments, targetVal: post.targetComments, icon: '💬' },
+                                      { key: 'shares', label: t('shares'), value: post.shares, targetVal: post.targetShares, icon: '🔗' },
+                                      { key: 'reposts', label: t('reposts'), value: post.reposts, targetVal: post.targetReposts, icon: '🔁' },
+                                      { key: 'saves', label: t('saves'), value: post.saves ?? 0, targetVal: post.targetSaves, icon: '🔖' },
+                                      { key: 'views', label: t('views'), value: post.views ?? 0, targetVal: post.targetViews, icon: '👁️' },
+                                    ] as const).filter(m => m.value > 0 || (m.targetVal ?? 0) > 0).map(metric => {
+                                      const tgt = metric.targetVal ?? 0;
+                                      const mPct = tgt > 0 ? Math.min((metric.value / tgt) * 100, 100) : 0;
+                                      return (
+                                        <div key={metric.key} className="flex flex-col gap-0.5">
+                                          <div className="flex items-center justify-between">
+                                            <span className="flex items-center gap-1 text-[9px] text-prada-taupe/80">
+                                              <span className="text-[10px]">{metric.icon}</span>
+                                              <span>{metric.label}</span>
+                                            </span>
+                                            <div className="flex items-baseline gap-0.5">
+                                              <span className="text-[11px] font-bold text-prada-charcoal tabular-nums">{metric.value.toLocaleString()}</span>
+                                              {tgt > 0 && <span className="text-[9px] text-prada-taupe/50">/ {tgt.toLocaleString()}</span>}
+                                            </div>
+                                          </div>
+                                          {tgt > 0 && (
+                                            <div className="h-1 w-full bg-prada-warm/30 rounded-full overflow-hidden">
+                                              <div
+                                                className={`h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r ${iconPlatform?.color || 'from-prada-charcoal to-prada-taupe'}`}
+                                                style={{ width: `${mPct}%` }}
+                                              />
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {/* Total Summary */}
+                                  <div className="pt-1.5 border-t border-prada-warm/30 flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-prada-charcoal/50 uppercase tracking-wider">{t('totalEngagementLabel')}</span>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-sm font-bold text-[#C53A4B] tabular-nums">{totalEngagement.toLocaleString()}</span>
+                                      {(post.target ?? 0) > 0 && (
+                                        <span className={`text-[9px] font-bold ${pct >= 100 ? 'text-emerald-500' : 'text-prada-taupe/50'}`}>
+                                          ({pct.toFixed(1)}%)
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            ))}
-                          </div>
-
-                          <div className="h-1" />
-                        </div>
+                            );
+                          })}
+                        </>
                       );
                     })()}
                   </div>
+
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Important Media Card (boost = 2) */}
+          {totalTasksList.length > 0 && !loading && !error && activeSection === 'important' && (
+            <div className="mb-2 animate-in fade-in zoom-in-95 duration-500">
+              <div className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-4 sm:p-5 mx-0 border border-prada-warm/30 shadow-2xl shadow-black/5 relative group">
+                {/* Decorative glow */}
+                <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
+                  <div className="absolute top-0 right-0 -mr-10 -mt-10 w-28 h-28 bg-prada-warm/25 rounded-full blur-2xl pointer-events-none" />
+                </div>
+
+                <div className="relative z-10 flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex flex-col gap-2 w-full">
+                    {/* Title Row */}
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        <span className="text-[#C53A4B] text-sm sm:text-base leading-none">✦</span>
+                        <h3 className="text-[10px] sm:text-xs font-bold text-[#C53A4B] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
+                      </div>
+                      {/* Minimize button — always visible top-right */}
+                      <div className="flex flex-col items-center shrink-0">
+                        <button
+                          onClick={() => setActiveSection(null)}
+                          className="w-7 h-7 rounded-full bg-[#C53A4B]/10 text-[#C53A4B] border border-[#C53A4B]/20 shadow-sm hover:bg-[#C53A4B]/20 active:scale-95 flex items-center justify-center transition-colors"
+                          title={t('minimize')}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </button>
+                        <span className="text-[6px] font-bold text-[#C53A4B]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                          {t('tapToHide')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Filter Row — full width below title */}
+                    <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pb-1">
+                      <button
+                        onClick={() => setFeaturedFilterPlatform(null)}
+                        className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!featuredFilterPlatform
+                          ? 'bg-[#C53A4B] border-transparent text-white'
+                          : 'bg-white border-[#C53A4B]/30 text-[#C53A4B]/70 hover:bg-[#C53A4B]/10'
+                          }`}
+                      >
+                        {t('allLabel') || 'All'}
+                      </button>
+                      {(['instagram', 'tiktok', 'x', 'facebook', 'youtube'] as const).map(p => {
+                        const isActive = featuredFilterPlatform === p;
+                        return (
+                          <button
+                            key={p}
+                            onClick={() => setFeaturedFilterPlatform(isActive ? null : p)}
+                            className={`w-7 h-7 rounded-full flex-shrink-0 text-[12px] border transition-colors flex items-center justify-center shadow-sm ${isActive
+                              ? 'bg-white border-[#C53A4B] text-[#C53A4B]'
+                              : 'bg-white border-[#C53A4B]/30 text-[#C53A4B]/50 hover:border-[#C53A4B]/60 hover:text-[#C53A4B]/80'
+                              }`}
+                          >
+                            <div className="w-4 h-4 text-current flex items-center justify-center">
+                              {platformConfig[p].icon}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Important Media Posts List */}
+                  <div className="flex flex-col gap-3" key={`important-media-list-${selectedMediaTitleFilter || 'All'}-${featuredFilterPlatform || 'all'}`}>
+                    {(() => {
+                      // Get all posts marked as important media in the sheet (boost = 2)
+                      let importantPosts = totalTasksList.filter(t =>
+                        t.boost?.includes(2) &&
+                        (!featuredFilterPlatform || t.platform === featuredFilterPlatform) &&
+                        (activePhase === 'all' || t.phase === activePhase || (activePhase === 'aftermath' && t.phase === 'aftermath2'))
+                      );
+
+                      // Apply Media Title Filter if selected
+                      if (selectedMediaTitleFilter) {
+                        importantPosts = importantPosts.filter(t => {
+                          const titleLower = (t.title || '').toLowerCase();
+                          const isVogue = titleLower.includes('vogue');
+                          const isBazaar = titleLower.includes('bazaar') || titleLower.includes('harper');
+                          const isOfficiel = titleLower.includes('officiel');
+                          const isWWD = titleLower.includes('wwd');
+                          const isPrada = titleLower.includes('prada') && !isVogue && !isBazaar && !isOfficiel && !isWWD; // Count as Prada only if it's not another major media outlet
+
+                          if (selectedMediaTitleFilter === 'Prada') return isPrada;
+                          if (selectedMediaTitleFilter === 'Vogue') return isVogue;
+                          if (selectedMediaTitleFilter === "Harper's BAZAAR") return isBazaar;
+                          if (selectedMediaTitleFilter === "L'Officiel") return isOfficiel;
+                          if (selectedMediaTitleFilter === 'WWD') return isWWD;
+                          if (selectedMediaTitleFilter === 'Others') return !isVogue && !isBazaar && !isOfficiel && !isWWD && !isPrada;
+
+                          return true;
+                        });
+                      }
+
+                      importantPosts = importantPosts.sort((a, b) => {
+                        const getSum = (t: typeof a) => t.likes + t.comments + t.shares + t.reposts + (t.saves || 0) + (t.views || 0);
+                        const getTargetSum = (t: typeof a) => (t.targetLikes || 0) + (t.targetComments || 0) + (t.targetShares || 0) + (t.targetReposts || 0) + (t.targetSaves || 0) + (t.targetViews || 0);
+
+                        const aTarget = getTargetSum(a) || a.target || 1;
+                        const bTarget = getTargetSum(b) || b.target || 1;
+
+                        const aDone = getSum(a) >= aTarget ? 1 : 0;
+                        const bDone = getSum(b) >= bTarget ? 1 : 0;
+
+                        return aDone - bDone;
+                      }).slice(0, 100);
+
+                      if (importantPosts.length === 0) {
+                        return <div className="text-center text-xs text-prada-taupe/60 italic py-4">{t('noBoostPosts')}</div>;
+                      }
+
+                      return (
+                        <>
+                          {/* Media Title Filter Row */}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-2 pt-1 px-1 mb-1">
+                            {['All', 'Prada', 'Vogue', "Harper's BAZAAR", "L'Officiel", 'WWD', 'Others'].map(filterOption => {
+                              const isActive = (filterOption === 'All' && selectedMediaTitleFilter === null) || filterOption === selectedMediaTitleFilter;
+                              return (
+                                <button
+                                  key={filterOption}
+                                  onClick={() => setSelectedMediaTitleFilter(filterOption === 'All' ? null : filterOption)}
+                                  className={`text-[11px] font-bold transition-colors ${isActive
+                                    ? 'text-[#C53A4B]'
+                                    : 'text-prada-taupe/60 hover:text-[#C53A4B]/70'
+                                    }`}
+                                >
+                                  {filterOption}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Summary Bar */}
+                          <div className="flex items-center justify-between px-1 pb-1 mb-1">
+                            <span className="text-[10px] text-prada-taupe/60">
+                              {t('missionCount')}
+                            </span>
+                            <span className="text-[11px] font-bold text-[#C53A4B]">
+                              {importantPosts.length} {t('missionCountUnit')}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {importantPosts.map((post, idx) => {
+                              const iconPlatform = platformConfig[post.platform as keyof typeof platformConfig];
+                              const totalEngagement = post.likes + post.comments + post.shares + post.reposts + (post.saves ?? 0) + (post.views ?? 0);
+                              const target = post.target || 1;
+                              const pct = Math.min((totalEngagement / target) * 100, 100);
+
+                              return (
+                                <div
+                                  key={post.id || idx}
+                                  onClick={() => { setSelectedTask(post); setShowMarkDone(false); setGeneratedMessage(''); }}
+                                  className="flex flex-col bg-white rounded-2xl p-2.5 sm:p-3 border border-[#C53A4B]/20 shadow-sm hover:shadow-md hover:border-[#C53A4B]/40 transition-all group/post relative overflow-hidden cursor-pointer"
+                                >
+                                  {/* Header: Platform Icon + Title */}
+                                  <div className="flex items-center gap-2.5 mb-2.5 relative z-10 w-full overflow-hidden">
+                                    <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br ${iconPlatform?.color || 'from-[#C53A4B] to-[#E35D6A]'} text-white shadow-sm relative group-hover/post:scale-105 transition-transform`}>
+                                      <div className="w-4 h-4 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{iconPlatform?.icon}</div>
+                                      <div className="absolute inset-0 bg-white/0 group-hover/post:bg-white/10 transition-colors" />
+                                    </div>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                      <span className="text-[11px] font-bold text-[#C53A4B] leading-none uppercase tracking-wider truncate">
+                                        {post.title || `PRADA`}
+                                      </span>
+                                      <span className="text-[8px] font-semibold text-prada-taupe/60 capitalize mt-[2px] leading-tight">
+                                        {iconPlatform?.name || post.platform}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Metrics Grid */}
+                                  <div className="grid grid-cols-1 gap-y-2 mb-2.5 relative z-10 w-full">
+                                    {([
+                                      { key: 'likes', label: t('likes') || 'Likes', value: post.likes, targetVal: post.targetLikes, icon: '❤️' },
+                                      { key: 'comments', label: t('comments') || 'Comments', value: post.comments, targetVal: post.targetComments, icon: '💬' },
+                                      { key: 'reposts', label: t('reposts') || 'Reposts', value: post.reposts, targetVal: post.targetReposts, icon: '🔁' },
+                                      { key: 'saves', label: t('saves') || 'Saves', value: post.saves ?? 0, targetVal: post.targetSaves, icon: '🔖' },
+                                      { key: 'views', label: t('views') || 'Views', value: post.views ?? 0, targetVal: post.targetViews, icon: '👁️' },
+                                    ] as const).filter(m => m.value > 0 || (m.targetVal ?? 0) > 0).map(metric => {
+                                      const tgt = metric.targetVal ?? 0;
+                                      const mPct = tgt > 0 ? Math.min((metric.value / tgt) * 100, 100) : 0;
+                                      return (
+                                        <div key={metric.key} className="flex flex-col gap-[3px] w-full">
+                                          <div className="flex items-center justify-between w-full leading-none">
+                                            <span className="flex items-center gap-1 text-[9px] font-medium text-prada-taupe/80">
+                                              <span>{metric.icon}</span>
+                                              <span>{metric.label}</span>
+                                            </span>
+                                            <div className="flex items-baseline gap-1">
+                                              <span className="text-[10px] font-bold text-[#C53A4B]">{metric.value.toLocaleString()}</span>
+                                              {tgt > 0 && <span className="text-[8px] font-medium text-prada-taupe/40">/ {tgt.toLocaleString()}</span>}
+                                            </div>
+                                          </div>
+                                          {tgt > 0 && (
+                                            <div className="h-1 w-full bg-[#C53A4B]/10 rounded-full overflow-hidden">
+                                              <div
+                                                className="h-full rounded-full transition-all duration-1000 ease-out bg-[#C53A4B]"
+                                                style={{ width: `${mPct}%` }}
+                                              />
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {/* Total Summary */}
+                                  <div className="pt-2 mt-1 border-t border-prada-warm/50 flex items-center justify-between relative z-10 w-full leading-none">
+                                    <span className="text-[9px] font-bold text-[#D09F93] uppercase tracking-widest">{t('totalEngagementLabel') || 'TOTAL'}</span>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-[11px] font-bold text-[#C53A4B]">{totalEngagement.toLocaleString()}</span>
+                                      {(post.target ?? 0) > 0 && (
+                                        <span className={`text-[9px] font-bold ${pct >= 100 ? 'text-emerald-500' : 'text-prada-taupe/40'}`}>
+                                          ({pct.toFixed(1)}%)
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div >
+
                 </div>
               </div>
             </div>
@@ -1071,113 +1483,228 @@ function App() {
             </div>
           )}
 
-          {visibleTasks.map((task, index) => {
-            const config = platformConfig[task.platform as keyof typeof platformConfig] || { color: 'from-slate-400 to-slate-500', icon: null, name: 'Unknown' };
-            return (
-              <div key={`${task.id}-${index}`}>
-                {(index === 0 || isTaskCompleted(task) !== isTaskCompleted(visibleTasks[index - 1])) && (
-                  <div className="flex items-center gap-3 mb-2 mt-6 first:mt-2">
-                    <h3 className="text-sm font-bold text-prada-charcoal uppercase tracking-widest pl-2">
-                      {isTaskCompleted(task) ? t('done') : t('pending')}
-                    </h3>
-                    <div className="flex-1 h-px bg-prada-warm/50" />
+          {/* Tasks List Header & Wrap */}
+          {totalTasksList.length > 0 && !loading && !error && activeSection === 'tasks' && (
+            <div className="mb-4 bg-white/80 backdrop-blur-md rounded-[24px] p-2 border border-prada-warm/30 shadow-2xl shadow-black/5 mt-2 animate-in fade-in zoom-in-95 duration-500">
+              {/* Header with Minimize button */}
+              {/* Header with Minimize button */}
+              <div className="flex items-start sm:items-center justify-between mb-2 px-1 sm:px-3 pt-2 w-full">
+                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pt-1">
+                  <span className="text-[#C53A4B] text-sm sm:text-base leading-none">✦</span>
+                  <h3 className="text-[10px] sm:text-xs font-bold text-[#C53A4B] uppercase tracking-[0.15em] whitespace-nowrap">{t('tasks') || 'Tasks'}</h3>
+                </div>
+
+                {/* Tasks Platform Filters & Minimize */}
+                <div className="flex items-start gap-1.5 overflow-visible sm:overflow-x-auto scrollbar-hide justify-end pl-2 pb-1">
+                  {/* Desktop Horizontal Row */}
+                  <div className="hidden sm:flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => setTaskFilterPlatform(null)}
+                      className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!taskFilterPlatform
+                        ? 'bg-[#C53A4B] border-transparent text-white'
+                        : 'bg-white border-[#C53A4B]/30 text-[#C53A4B]/70 hover:bg-[#C53A4B]/10'
+                        }`}
+                    >
+                      All
+                    </button>
+                    {(['instagram', 'tiktok', 'x', 'facebook', 'youtube'] as const).map(p => {
+                      const isActive = taskFilterPlatform === p;
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => setTaskFilterPlatform(isActive ? null : p)}
+                          className={`w-7 h-7 rounded-full flex-shrink-0 text-[12px] border transition-colors flex items-center justify-center shadow-sm ${isActive
+                            ? 'bg-white border-[#C53A4B] text-[#C53A4B]'
+                            : 'bg-white border-[#C53A4B]/30 text-[#C53A4B]/50 hover:border-[#C53A4B]/60 hover:text-[#C53A4B]/80'
+                            }`}
+                        >
+                          <div className="w-4 h-4 text-current flex items-center justify-center">
+                            {platformConfig[p].icon}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Mobile Dropdown */}
+                  <div className="flex sm:hidden relative group/dropdown shrink-0 items-center justify-center outline-none" tabIndex={0}>
+                    <button className="h-7 pl-2 pr-1.5 rounded-full flex gap-1 items-center justify-center shadow-sm bg-white border border-[#C53A4B]/30 text-[#C53A4B] pointer-events-none group-focus-within/dropdown:border-[#C53A4B]">
+                      {!taskFilterPlatform ? (
+                        <span className="text-[10px] font-bold px-1">All</span>
+                      ) : (
+                        <div className="w-4 h-4 flex items-center justify-center">
+                          {platformConfig[taskFilterPlatform as keyof typeof platformConfig]?.icon}
+                        </div>
+                      )}
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3 text-[#C53A4B]/60 transition-transform group-focus-within/dropdown:rotate-180">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-2xl shadow-xl border border-[#C53A4B]/20 overflow-hidden flex-col z-[100] hidden group-focus-within/dropdown:flex animate-in fade-in zoom-in-95 duration-200">
+                      <button
+                        onClick={(e) => {
+                          setTaskFilterPlatform(null);
+                          (e.currentTarget.parentElement?.parentElement as HTMLElement)?.blur();
+                        }}
+                        className={`flex items-center px-4 py-2.5 text-xs font-bold transition-colors ${!taskFilterPlatform ? 'bg-[#C53A4B]/10 text-[#C53A4B]' : 'text-[#C53A4B]/80 hover:bg-[#C53A4B]/5'}`}
+                      >
+                        All Platforms
+                      </button>
+                      {(['instagram', 'tiktok', 'x', 'facebook', 'youtube'] as const).map(p => {
+                        const isActive = taskFilterPlatform === p;
+                        return (
+                          <button
+                            key={p}
+                            onClick={(e) => {
+                              setTaskFilterPlatform(isActive ? null : p);
+                              (e.currentTarget.parentElement?.parentElement as HTMLElement)?.blur();
+                            }}
+                            className={`flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-colors border-t border-[#C53A4B]/5 ${isActive ? 'bg-[#C53A4B]/10 text-[#C53A4B]' : 'text-[#C53A4B]/70 hover:bg-[#C53A4B]/5'}`}
+                          >
+                            <div className={`w-4 h-4 flex items-center justify-center ${isActive ? 'text-[#C53A4B]' : ''}`}>
+                              {platformConfig[p].icon}
+                            </div>
+                            <span className="capitalize">{p}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="w-px h-6 bg-[#C53A4B]/20 mx-0.5 shrink-0 rounded-full mt-0.5" />
+
+                  <div className="flex flex-col items-center shrink-0">
+                    <button
+                      onClick={() => setActiveSection(null)}
+                      className="w-7 h-7 rounded-full bg-[#C53A4B]/10 text-[#C53A4B] border border-[#C53A4B]/20 shadow-sm hover:bg-[#C53A4B]/20 active:scale-95 flex items-center justify-center transition-colors"
+                      title={t('minimize')}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </button>
+                    <span className="text-[6px] font-bold text-[#C53A4B]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                      {t('tapToHide')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Task List mapping */}
+              <div className="animate-in fade-in slide-in-from-top-4 duration-500" key={`task-list-${taskFilterPlatform || 'all'}`}>
+                {visibleTasks.map((task, index) => {
+                  const config = platformConfig[task.platform as keyof typeof platformConfig] || { color: 'from-slate-400 to-slate-500', icon: null, name: 'Unknown' };
+                  return (
+                    <div key={`${task.id}-${index}`}>
+                      {(index === 0 || isTaskCompleted(task) !== isTaskCompleted(visibleTasks[index - 1])) && (
+                        <div className="flex items-center gap-3 mb-2 mt-6 first:mt-2">
+                          <h3 className="text-sm font-bold text-prada-charcoal uppercase tracking-widest pl-2">
+                            {isTaskCompleted(task) ? t('done') : t('pending')}
+                          </h3>
+                          <div className="flex-1 h-px bg-prada-warm/50" />
+                        </div>
+                      )}
+
+                      <div
+                        onClick={() => { setSelectedTask(task); setShowMarkDone(true); setGeneratedMessage(''); }}
+                        className={`flex items-center shrink-0 gap-2 rounded-2xl py-2.5 px-3 mb-1.5 border cursor-pointer hover:shadow-md transition-all group animate-in fade-in slide-in-from-bottom-4 duration-300 ${isTaskCompleted(task)
+                          ? 'bg-prada-offwhite border-prada-warm/50 opacity-60 grayscale-[0.3]'
+                          : task.focus === 2
+                            ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-400 shadow-md shadow-orange-200/60 relative overflow-hidden'
+                            : task.focus === 1
+                              ? 'bg-prada-offwhite border-prada-warm bg-prada-warm/10 shadow-sm relative overflow-hidden'
+                              : 'bg-prada-offwhite border-prada-warm/50'
+                          }`}
+                        style={{ animationDelay: `${(index % 10) * 50}ms` }}
+                      >
+                        {/* Platform badge */}
+                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${config.color} flex items-center justify-center text-sm flex-shrink-0 shadow-sm text-white`}>
+                          {isTaskCompleted(task) ? '✓' : config.icon}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[13px] font-medium text-prada-charcoal/90 truncate">
+                              {task.title || t('noTitle')}
+                            </span>
+                            {task.focus === 2 && !isTaskCompleted(task) && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full flex-shrink-0 animate-pulse shadow-sm shadow-orange-400/50">
+                                {t('hotBadge')}
+                              </span>
+                            )}
+                            {task.focus === 1 && !isTaskCompleted(task) && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-prada-gold to-prada-darkgold text-white rounded-full flex-shrink-0">
+                                {t('focusBadge')}
+                              </span>
+                            )}
+                          </div>
+                          {/* Engagement Metrics */}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {task.likes > 0 && (
+                              <span className="flex items-center gap-0.5 text-[10px] text-prada-taupe">
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px]"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                                {task.likes}
+                              </span>
+                            )}
+                            {task.comments > 0 && (
+                              <span className="flex items-center gap-0.5 text-[10px] text-prada-taupe">
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px]"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+                                {task.comments}
+                              </span>
+                            )}
+                            {task.shares > 0 && (
+                              <span className="flex items-center gap-0.5 text-[10px] text-prada-taupe">
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px]"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" /></svg>
+                                {task.shares}
+                              </span>
+                            )}
+                            {task.reposts > 0 && (
+                              <span className="flex items-center gap-0.5 text-[10px] text-prada-taupe">
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px]"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" /></svg>
+                                {task.reposts}
+                              </span>
+                            )}
+                            {task.likes === 0 && task.comments === 0 && task.shares === 0 && task.reposts === 0 && (
+                              <span className="text-[10px] text-prada-taupe/40">—</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        {isTaskCompleted(task) ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnmarkComplete(task);
+                            }}
+                            className="text-prada-taupe/50 text-[11px] hover:text-prada-charcoal/60 px-2 py-1"
+                          >
+                            ↩
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => handleQuickComplete(task, e)}
+                            className="bg-prada-warm/30 border border-prada-warm/50 text-prada-charcoal text-xs px-2 py-1 rounded-md font-semibold hover:bg-prada-warm/50 transition-colors"
+                          >
+                            ✓
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Load more indicator */}
+                {visibleCount < filteredTasks.length && (
+                  <div className="text-center py-4 text-prada-taupe text-xs">
+                    {t('scrollToLoad')} ({visibleCount}/{filteredTasks.length})
                   </div>
                 )}
 
-                <div
-                  onClick={() => setSelectedTask(task)}
-                  className={`flex items-center gap-2 rounded-2xl py-2.5 px-3 mb-1.5 border cursor-pointer hover:shadow-md transition-all group animate-in fade-in slide-in-from-bottom-4 duration-300 ${isTaskCompleted(task)
-                    ? 'bg-prada-offwhite border-prada-warm/50 opacity-60 grayscale-[0.3]'
-                    : task.focus === 2
-                      ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-400 shadow-md shadow-orange-200/60 relative overflow-hidden'
-                      : task.focus === 1
-                        ? 'bg-prada-offwhite border-prada-warm bg-prada-warm/10 shadow-sm relative overflow-hidden'
-                        : 'bg-prada-offwhite border-prada-warm/50'
-                    }`}
-                  style={{ animationDelay: `${(index % 10) * 50}ms` }}
-                >
-                  {/* Platform badge */}
-                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${config.color} flex items-center justify-center text-sm flex-shrink-0 shadow-sm text-white`}>
-                    {isTaskCompleted(task) ? '✓' : config.icon}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[13px] font-medium text-prada-charcoal/90 truncate">
-                        {task.title || t('noTitle')}
-                      </span>
-                      {task.focus === 2 && !isTaskCompleted(task) && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full flex-shrink-0 animate-pulse shadow-sm shadow-orange-400/50">
-                          {t('hotBadge')}
-                        </span>
-                      )}
-                      {task.focus === 1 && !isTaskCompleted(task) && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-prada-gold to-prada-darkgold text-white rounded-full flex-shrink-0">
-                          {t('focusBadge')}
-                        </span>
-                      )}
-                    </div>
-                    {/* Engagement Metrics */}
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {task.likes > 0 && (
-                        <span className="flex items-center gap-0.5 text-[10px] text-prada-taupe">
-                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px]"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-                          {task.likes}
-                        </span>
-                      )}
-                      {task.comments > 0 && (
-                        <span className="flex items-center gap-0.5 text-[10px] text-prada-taupe">
-                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px]"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
-                          {task.comments}
-                        </span>
-                      )}
-                      {task.shares > 0 && (
-                        <span className="flex items-center gap-0.5 text-[10px] text-prada-taupe">
-                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px]"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" /></svg>
-                          {task.shares}
-                        </span>
-                      )}
-                      {task.reposts > 0 && (
-                        <span className="flex items-center gap-0.5 text-[10px] text-prada-taupe">
-                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px]"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" /></svg>
-                          {task.reposts}
-                        </span>
-                      )}
-                      {task.likes === 0 && task.comments === 0 && task.shares === 0 && task.reposts === 0 && (
-                        <span className="text-[10px] text-prada-taupe/40">—</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  {isTaskCompleted(task) ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUnmarkComplete(task);
-                      }}
-                      className="text-prada-taupe/50 text-[11px] hover:text-prada-charcoal/60 px-2 py-1"
-                    >
-                      ↩
-                    </button>
-                  ) : (
-                    <button
-                      onClick={(e) => handleQuickComplete(task, e)}
-                      className="bg-prada-warm/30 border border-prada-warm/50 text-prada-charcoal text-xs px-2 py-1 rounded-md font-semibold hover:bg-prada-warm/50 transition-colors"
-                    >
-                      ✓
-                    </button>
-                  )}
-                </div>
               </div>
-            );
-          })}
-
-          {/* Load more indicator */}
-          {visibleCount < filteredTasks.length && (
-            <div className="text-center py-4 text-prada-taupe text-xs">
-              {t('scrollToLoad')} ({visibleCount}/{filteredTasks.length})
             </div>
           )}
 
@@ -1195,10 +1722,10 @@ function App() {
             </div>
           )}
         </div>
-      </main>
+      </main >
 
       {/* Bottom Bar Container (Fixed at bottom, transparent) */}
-      <footer className="relative z-40 flex-shrink-0 bg-transparent pt-2 pb-2">
+      < footer className="relative z-40 flex-shrink-0 bg-transparent pt-2 pb-2" >
         <div className="max-w-lg mx-auto relative px-4">
           {/* Stats Bar */}
           <div className="bg-prada-charcoal/95 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center justify-between shadow-xl border border-prada-charcoal/50 w-full">
@@ -1250,7 +1777,7 @@ function App() {
             </button>
           </div>
         </div>
-      </footer>
+      </footer >
 
       {/* Stats Bottom Sheet Modal */}
       {
@@ -1371,17 +1898,42 @@ function App() {
 
                   {/* Grand Total Overview */}
                   {(() => {
-                    const totalAll = platformStatsMap['total'] || dashboardStats;
+                    const totalAll = getPlatformStats(undefined, summaryModalPeriod);
                     return (
-                      <div className="bg-gradient-to-br from-white to-prada-cream/30 backdrop-blur-xl rounded-[2rem] p-4 sm:p-5 shadow-xl shadow-black/5 border border-prada-warm/20 relative overflow-hidden mb-1">
+                      <div className="bg-gradient-to-br from-white to-prada-cream/30 backdrop-blur-xl rounded-[2rem] p-4 sm:p-5 shadow-xl shadow-black/5 border border-prada-warm/20 relative overflow-hidden mb-1 flex flex-col gap-3">
                         {/* Decorative subtle element */}
                         <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/40 rounded-full blur-2xl"></div>
 
-                        <div className="relative z-10 flex flex-col gap-4">
+                        <div className="relative z-10 flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-prada-charcoal font-serif text-lg">✦</span>
                             <h4 className="text-prada-charcoal font-bold text-[15px] tracking-wide">{t('totalStats')}</h4>
                           </div>
+
+                          {/* MIV / EMV Toggle */}
+                          <div className="flex bg-white/50 backdrop-blur-md p-1 rounded-xl shadow-sm border border-prada-warm/30">
+                            <button
+                              onClick={() => setSummaryModalPeriod('miv')}
+                              className={`px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-[0.15em] transition-all ${summaryModalPeriod === 'miv'
+                                ? 'bg-prada-charcoal text-white shadow-md'
+                                : 'text-prada-charcoal/60 hover:text-prada-charcoal'
+                                }`}
+                            >
+                              MIV
+                            </button>
+                            <button
+                              onClick={() => setSummaryModalPeriod('emv')}
+                              className={`px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-[0.15em] transition-all ${summaryModalPeriod === 'emv'
+                                ? 'bg-prada-charcoal text-white shadow-md'
+                                : 'text-prada-charcoal/60 hover:text-prada-charcoal'
+                                }`}
+                            >
+                              EMV
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="relative z-10 flex flex-col gap-4">
 
                           {/* Highlighted Likes */}
                           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-prada-warm/20 flex items-center justify-between shadow-sm">
@@ -1702,30 +2254,40 @@ function App() {
                       </button>
                     )}
 
-                    <div className="flex gap-2.5">
+                    {showMarkDone && (
+                      <div className="flex gap-2.5">
+                        <button
+                          onClick={() => handleGoToPost(selectedTask)}
+                          className={`flex-1 py-3.5 rounded-[14px] bg-gradient-to-r ${config.color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
+                        >
+                          {t('goPost')}
+                        </button>
+
+                        {isTaskCompleted(selectedTask) ? (
+                          <button
+                            onClick={() => handleUnmarkComplete(selectedTask)}
+                            className="flex-1 py-3.5 rounded-[14px] bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 text-[12.5px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                          >
+                            {t('done')}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleMarkComplete(selectedTask)}
+                            className="flex-1 py-3.5 rounded-[14px] bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5 border border-transparent"
+                          >
+                            {t('markDoneBtn')}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {!showMarkDone && (
                       <button
                         onClick={() => handleGoToPost(selectedTask)}
-                        className={`flex-1 py-3.5 rounded-[14px] bg-gradient-to-r ${config.color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
+                        className={`w-full py-3.5 rounded-[14px] bg-gradient-to-r ${config.color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
                       >
                         {t('goPost')}
                       </button>
-
-                      {isTaskCompleted(selectedTask) ? (
-                        <button
-                          onClick={() => handleUnmarkComplete(selectedTask)}
-                          className="flex-1 py-3.5 rounded-[14px] bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 text-[12.5px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
-                        >
-                          {t('done')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleMarkComplete(selectedTask)}
-                          className="flex-1 py-3.5 rounded-[14px] bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5 border border-transparent"
-                        >
-                          {t('markDoneBtn')}
-                        </button>
-                      )}
-                    </div>
+                    )}
                   </div>
 
                   {/* 4. Subtle Tips */}
@@ -1758,7 +2320,7 @@ function App() {
         onClick={() => setShowAchievement(true)}
         isUnlocked={achievementUnlocked}
       />
-    </div>
+    </div >
   );
 }
 
