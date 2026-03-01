@@ -170,7 +170,7 @@ const extractGDriveId = (url: string): string => {
  * In production, uses lh3 CDN directly.
  */
 const gdriveImageUrl = (fileId: string): string =>
-  fileId ? `/api/gdrive/d/${fileId}` : '';
+  fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
 
 const gdriveFallbackUrl = (fileId: string): string =>
   fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w600` : '';
@@ -479,11 +479,21 @@ function App() {
                 targetViews: parseAbbreviatedNumber(getVal('target_views') || getVal('targetviews') || '0'),
                 image: (() => {
                   const rawImg = getVal('image') || getVal('img') || getVal('picture') || '';
+                  // Dropbox: convert share link to direct image link
+                  if (rawImg.includes('dropbox.com') || rawImg.includes('dropboxusercontent.com')) {
+                    return rawImg
+                      .replace('www.dropbox.com', 'dl.dropboxusercontent.com')
+                      .replace('?dl=0', '')
+                      .replace('?dl=1', '')
+                      .replace('&dl=0', '')
+                      .replace('&dl=1', '');
+                  }
                   const fileId = extractGDriveId(rawImg);
                   return fileId ? gdriveImageUrl(fileId) : rawImg;
                 })(),
                 imageFileId: (() => {
                   const rawImg = getVal('image') || getVal('img') || getVal('picture') || '';
+                  if (rawImg.includes('dropbox.com') || rawImg.includes('dropboxusercontent.com')) return '';
                   return extractGDriveId(rawImg);
                 })(),
                 boost: (() => {
@@ -1137,15 +1147,16 @@ function App() {
                                       crossOrigin="anonymous"
                                       onError={(e) => {
                                         const img = e.currentTarget as HTMLImageElement;
-                                        const fallback1 = post.imageFileId ? gdriveFallbackUrl(post.imageFileId) : '';
-                                        const fallback2 = post.imageFileId ? gdriveUcUrl(post.imageFileId) : '';
-                                        if (fallback1 && img.src !== fallback1 && !img.src.includes('thumbnail')) {
-                                          img.src = fallback1;
-                                        } else if (fallback2 && img.src !== fallback2 && !img.src.includes('uc?export')) {
-                                          img.src = fallback2;
-                                        } else {
-                                          img.style.display = 'none';
-                                        }
+                                        const src = img.src;
+                                        const id = post.imageFileId;
+                                        if (!id) { img.style.display = 'none'; return; }
+                                        const proxy = `/api/gdrive/d/${id}`;
+                                        const thumb = gdriveFallbackUrl(id);
+                                        const uc = gdriveUcUrl(id);
+                                        if (!src.includes('/api/gdrive')) { img.src = proxy; }
+                                        else if (!src.includes('thumbnail')) { img.src = thumb; }
+                                        else if (!src.includes('uc?export')) { img.src = uc; }
+                                        else { img.style.display = 'none'; }
                                       }}
                                     />
                                   ) : null}
