@@ -479,14 +479,14 @@ function App() {
                 targetViews: parseAbbreviatedNumber(getVal('target_views') || getVal('targetviews') || '0'),
                 image: (() => {
                   const rawImg = getVal('image') || getVal('img') || getVal('picture') || '';
-                  // Dropbox: convert share link to direct image link
                   if (rawImg.includes('dropbox.com') || rawImg.includes('dropboxusercontent.com')) {
+                    // Convert any Dropbox share link to a direct image URL
+                    // Handles both old (/s/) and new (/scl/fi/) formats
                     return rawImg
                       .replace('www.dropbox.com', 'dl.dropboxusercontent.com')
-                      .replace('?dl=0', '')
-                      .replace('?dl=1', '')
-                      .replace('&dl=0', '')
-                      .replace('&dl=1', '');
+                      .replace(/[?&]dl=\d/g, '')   // remove dl=0 or dl=1
+                      .replace(/\?$/, '')           // clean trailing ?
+                      .replace(/&$/, '');           // clean trailing &
                   }
                   const fileId = extractGDriveId(rawImg);
                   return fileId ? gdriveImageUrl(fileId) : rawImg;
