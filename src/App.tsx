@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLanguage } from './i18n/LanguageContext';
-import AchievementPopup, { AchievementFloatingButton } from './components/AchievementPopup';
+import StatsCardModal from './components/StatsCardModal';
+import NameSubmitModal, { hasSubmittedCredits } from './components/NameSubmitModal';
+import EndCreditsModal from './components/EndCreditsModal';
+
 
 // Types
 interface Task {
@@ -26,7 +29,7 @@ interface Task {
   targetViews?: number;
   image?: string;
   imageFileId?: string;
-  boost?: number[]; // [] or [1] or [2] or [1,2]
+  boost?: number[]; // [] or [1]=boost, [2]=focus-media
 }
 
 interface CompletedState {
@@ -222,21 +225,15 @@ function App() {
   const [showPlatformSummaryModal, setShowPlatformSummaryModal] = useState(false);
   const [selectedMediaTitleFilter, setSelectedMediaTitleFilter] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<'tasks' | 'boost' | 'important' | null>('boost');  // Achievement popup states (Global)
+  // New feature states
+  const [showNameSubmit, setShowNameSubmit] = useState(false);
+  const [showEndCredits, setShowEndCredits] = useState(false);
+  const [showStatsCard, setShowStatsCard] = useState(false);
+  const [creditsSubmitted, setCreditsSubmitted] = useState(() => hasSubmittedCredits());
   const [showMarkDone, setShowMarkDone] = useState(true);
-  const [showAchievement, setShowAchievement] = useState(false);
   const [achievementUnlocked, setAchievementUnlocked] = useState(() => {
     try {
       const saved = localStorage.getItem('social-tracker-achievement-unlocked-v3');
-      if (saved) return saved === 'true';
-    } catch {
-      return false;
-    }
-    return false;
-  });
-
-  const [achievementShownOnce, setAchievementShownOnce] = useState(() => {
-    try {
-      const saved = localStorage.getItem('social-tracker-achievement-shown-v3');
       if (saved) return saved === 'true';
     } catch {
       return false;
@@ -272,6 +269,25 @@ function App() {
     });
     return count;
   }, [completed, allTasks]);
+
+  // Auto-show Credits popup when all tasks are completed
+  useEffect(() => {
+    if (loading) return;
+    if (totalTasksList.length === 0) return;
+    if (totalCompletedCount !== totalTasksList.length) return;
+    if (creditsSubmitted) return;
+    // Small delay so the completion mark animation plays first
+    const timer = setTimeout(() => setShowNameSubmit(true), 800);
+    return () => clearTimeout(timer);
+  }, [totalCompletedCount, totalTasksList.length, creditsSubmitted, loading]);
+
+  // Auto-close NameSubmitModal if user unchecks and is no longer at 100%
+  useEffect(() => {
+    if (showNameSubmit && totalTasksList.length > 0 && totalCompletedCount < totalTasksList.length) {
+      setShowNameSubmit(false);
+    }
+  }, [totalCompletedCount, totalTasksList.length, showNameSubmit]);
+
 
   // Calculate platform-specific engagement stats
   const getPlatformStats = useCallback((platform?: string, period: 'emv' | 'miv' = statsPeriod) => {
@@ -348,17 +364,11 @@ function App() {
     if (allCompleted && !achievementUnlocked) {
       setAchievementUnlocked(true);
       localStorage.setItem('social-tracker-achievement-unlocked-v3', 'true');
-
-      if (!achievementShownOnce) {
-        setShowAchievement(true);
-        setAchievementShownOnce(true);
-        localStorage.setItem('social-tracker-achievement-shown-v3', 'true');
-      }
     } else if (!allCompleted && achievementUnlocked) {
       setAchievementUnlocked(false);
       localStorage.setItem('social-tracker-achievement-unlocked-v3', 'false');
     }
-  }, [allTasks, totalTasksList, completed, hasLoaded, loading, achievementUnlocked, achievementShownOnce]);
+  }, [allTasks, totalTasksList, completed, hasLoaded, loading, achievementUnlocked]);
 
   // Parse entire CSV text handling quoted strings with newlines
   const parseCSV = useCallback((csvText: string): string[][] => {
@@ -480,14 +490,14 @@ function App() {
                 image: (() => {
                   const rawImg = getVal('image') || getVal('img') || getVal('picture') || '';
                   if (rawImg.includes('dropbox.com') || rawImg.includes('dropboxusercontent.com')) {
-                    // Convert Dropbox share link to direct URL, then route through proxy for CORS
-                    const directUrl = rawImg
+                    // Convert Dropbox share link to direct URL.
+                    // Removed proxy because direct dl.dropboxusercontent.com works on Chrome mobile if crossOrigin="anonymous" is removed.
+                    return rawImg
                       .replace('www.dropbox.com', 'dl.dropboxusercontent.com')
                       .replace(/[?&]dl=\d/g, '')
                       .replace(/[?&]st=[^&]*/g, '')
                       .replace(/\?$/, '')
                       .replace(/&$/, '');
-                    return `/api/img?url=${encodeURIComponent(directUrl)}`;
                   }
                   const fileId = extractGDriveId(rawImg);
                   return fileId ? gdriveImageUrl(fileId) : rawImg;
@@ -689,8 +699,6 @@ function App() {
   }, [filteredTasks, visibleCount]);
 
   const pendingCount = tasks.filter(t => !isTaskCompleted(t)).length;
-  const completedCount = tasks.filter(t => isTaskCompleted(t)).length;
-
 
 
   // Get hashtags for platform
@@ -805,6 +813,7 @@ function App() {
       return next;
     });
     setSelectedTask(null);
+    setGeneratedMessage(''); // Clear any caption message on uncheck
   };
 
   // Quick complete without modal
@@ -951,8 +960,8 @@ function App() {
           </div>
 
           {/* Expand Toggle Buttons Header Area */}
-          <div className="max-w-lg mx-auto px-4 pb-2">
-            <div className="flex justify-center gap-3 items-center pt-1">
+          <div className="max-w-lg mx-auto px-2 sm:px-4 pb-2">
+            <div className="flex flex-wrap justify-center gap-2 items-center pt-1">
               {totalTasksList.length > 0 && !loading && !error && (
                 <>
                   <button
@@ -962,7 +971,7 @@ function App() {
                         setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
                       }
                     }}
-                    className={`px-4 h-8 rounded-full flex items-center gap-2 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'tasks'
+                    className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'tasks'
                       ? 'bg-[#E35D6A] text-white border-transparent shadow-[#E35D6A]/20'
                       : 'bg-white/80 backdrop-blur-md text-[#E35D6A] border-[#E35D6A]/40 shadow-sm hover:bg-white/90 shadow-[#E35D6A]/10 hover:scale-105'
                       }`}
@@ -970,7 +979,7 @@ function App() {
                     <span className={`text-[10px] ${activeSection === 'tasks' ? 'animate-pulse' : ''} transition-transform`}>
                       {activeSection === 'tasks' ? '✦' : '✧'}
                     </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider">{t('tasks') || 'Tasks'}</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">{t('tasks') || 'Tasks'}</span>
                   </button>
 
                   <button
@@ -980,7 +989,7 @@ function App() {
                         setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
                       }
                     }}
-                    className={`px-4 h-8 rounded-full flex items-center gap-2 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'boost'
+                    className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'boost'
                       ? 'bg-[#E35D6A] text-white border-transparent shadow-[#E35D6A]/20'
                       : 'bg-white/80 backdrop-blur-md text-[#E35D6A] border-[#E35D6A]/40 shadow-sm hover:bg-white/90 shadow-[#E35D6A]/10 hover:scale-105'
                       }`}
@@ -988,7 +997,7 @@ function App() {
                     <span className={`text-[10px] ${activeSection === 'boost' ? 'animate-pulse' : ''} transition-transform`}>
                       {activeSection === 'boost' ? '✦' : '🔥'}
                     </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider">{t('featuredEngagementToggle') || 'Engagement'}</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">{t('featuredEngagementToggle') || 'Engagement'}</span>
                   </button>
 
                   <button
@@ -998,7 +1007,7 @@ function App() {
                         setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
                       }
                     }}
-                    className={`px-4 h-8 rounded-full flex items-center gap-2 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'important'
+                    className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'important'
                       ? 'bg-[#E35D6A] text-white border-transparent shadow-[#E35D6A]/20'
                       : 'bg-white/80 backdrop-blur-md text-[#E35D6A] border-[#E35D6A]/40 shadow-sm hover:bg-white/90 shadow-[#E35D6A]/10 hover:scale-105'
                       }`}
@@ -1006,10 +1015,11 @@ function App() {
                     <span className={`text-[10px] ${activeSection === 'important' ? 'animate-pulse' : ''} transition-transform`}>
                       {activeSection === 'important' ? '✦' : '⭐'}
                     </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider">{t('importantMediaToggle') || 'Important'}</span>
+                    <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider`}>{t('importantMediaToggle') || 'Important'}</span>
                   </button>
                 </>
               )}
+
             </div>
           </div>
         </header>
@@ -1145,7 +1155,6 @@ function App() {
                                       alt={post.title || post.platform}
                                       className="absolute inset-0 w-full h-full object-cover"
                                       referrerPolicy="no-referrer"
-                                      crossOrigin="anonymous"
                                       onError={(e) => {
                                         const img = e.currentTarget as HTMLImageElement;
                                         const src = img.src;
@@ -1750,6 +1759,18 @@ function App() {
 
             <div className="w-px h-6 bg-white/10" />
 
+            <button
+              onClick={() => setShowStatsCard(true)}
+              className="flex flex-col items-center min-w-[45px] hover:opacity-70 transition-opacity"
+            >
+              <div className="text-[13px] font-bold text-white shadow-sm leading-none mb-0.5">
+                📊
+              </div>
+              <div className="text-[7.5px] text-prada-cream/80 uppercase tracking-widest whitespace-nowrap leading-none">{language === 'th' ? 'สถิติของฉัน' : 'My Stats'}</div>
+            </button>
+
+            <div className="w-px h-6 bg-white/10" />
+
             <div className="flex flex-col items-center min-w-[45px]">
               <div className="text-[11px] font-bold text-prada-cream flex items-baseline leading-none mb-0.5 whitespace-nowrap">
                 {pendingCount} <span className="text-[9px] font-normal opacity-60 ml-1">/ {totalTasksList.length}</span>
@@ -1760,17 +1781,12 @@ function App() {
             <div className="w-px h-6 bg-white/10" />
 
             <div className="flex flex-col items-center min-w-[45px]">
-              <div className="text-[13px] font-bold text-white shadow-sm leading-none mb-0.5">
-                {completedCount}
-              </div>
-              <div className="text-[7.5px] text-prada-cream/80 uppercase tracking-widest whitespace-nowrap leading-none">{t('done')}</div>
-            </div>
-
-            <div className="w-px h-6 bg-white/10" />
-
-            <div className="flex flex-col items-center min-w-[45px]">
               <div className="text-[13px] font-bold text-white leading-none mb-0.5">
-                {totalTasksList.length ? Math.round((totalCompletedCount / totalTasksList.length) * 100) : 0}%
+                {totalTasksList.length
+                  ? (totalCompletedCount === totalTasksList.length
+                    ? 100
+                    : Math.floor((totalCompletedCount / totalTasksList.length) * 100))
+                  : 0}%
               </div>
               <div className="text-[7.5px] text-prada-cream/60 uppercase tracking-widest leading-none">{t('totalLabel')}</div>
             </div>
@@ -2319,18 +2335,62 @@ function App() {
       }
 
 
-      {/* Achievement Popup */}
-      <AchievementPopup
-        isOpen={showAchievement}
-        onClose={() => setShowAchievement(false)}
+      {/* 🎬 Credits Floating Button — visible only when 100% complete */}
+      {totalTasksList.length > 0 && totalCompletedCount === totalTasksList.length && (
+        <div className="fixed bottom-24 right-5 z-50">
+          <div className="relative">
+            {/* Glowing Ping Effect */}
+            <div className="absolute inset-0 rounded-full bg-[#E35D6A] animate-ping opacity-60 duration-1000"></div>
+
+            <button
+              onClick={() => creditsSubmitted ? setShowEndCredits(true) : setShowNameSubmit(true)}
+              className="relative w-16 h-16 rounded-full bg-gradient-to-br from-[#E35D6A] to-[#C53A4B] border-[3px] border-white/50 shadow-xl shadow-[#C53A4B]/50 flex flex-col items-center justify-center gap-0.5 hover:scale-110 active:scale-95 transition-all group overflow-hidden"
+              title={creditsSubmitted ? 'ดู End Credits' : 'ลงชื่อใน Credits'}
+            >
+              {/* Shine sweep effect on hover */}
+              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
+
+              <span className="text-2xl leading-none drop-shadow-md group-hover:scale-110 group-hover:-translate-y-0.5 transition-transform duration-300">
+                {creditsSubmitted ? '✨' : '🎟️'}
+              </span>
+              <span className="text-white text-[8px] font-black tracking-[0.15em] uppercase leading-none mt-1 drop-shadow-sm">
+                {language === 'th' ? 'เครดิต' : 'Credits'}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 🏅 Name Submit Modal (100% Complete — combined achievement + credits) */}
+      <NameSubmitModal
+        isOpen={showNameSubmit}
+        onClose={() => setShowNameSubmit(false)}
+        onSubmitted={() => {
+          setCreditsSubmitted(true);
+          setShowNameSubmit(false);
+          setTimeout(() => setShowEndCredits(true), 500);
+        }}
+        onViewCredits={() => {
+          setShowNameSubmit(false);
+          setShowEndCredits(true);
+        }}
         completedCount={totalCompletedCount}
         totalCount={totalTasksList.length}
       />
 
-      {/* Achievement Floating Button */}
-      <AchievementFloatingButton
-        onClick={() => setShowAchievement(true)}
-        isUnlocked={achievementUnlocked}
+      {/* 🎬 End Credits Modal */}
+      <EndCreditsModal
+        isOpen={showEndCredits}
+        onClose={() => setShowEndCredits(false)}
+      />
+
+      {/* 📊 Personal Stats Card Modal */}
+      <StatsCardModal
+        isOpen={showStatsCard}
+        onClose={() => setShowStatsCard(false)}
+        completed={completed}
+        allTasks={allTasks}
+        totalTasksCount={totalTasksList.length}
       />
     </div >
   );

@@ -10,6 +10,8 @@ interface AchievementPopupProps {
     onClose: () => void;
     completedCount: number;
     totalCount: number;
+    onCredits?: () => void;
+    creditsSubmitted?: boolean;
 }
 
 // Elegant Celebration Effects — Gold & Cream luxury tones
@@ -93,7 +95,7 @@ const CelebrationEffects = () => {
     );
 };
 
-export default function AchievementPopup({ isOpen, onClose, completedCount, totalCount }: AchievementPopupProps) {
+export default function AchievementPopup({ isOpen, onClose, completedCount, totalCount, onCredits, creditsSubmitted }: AchievementPopupProps) {
     const { language } = useLanguage();
     const [showConfetti, setShowConfetti] = useState(false);
 
@@ -216,6 +218,19 @@ export default function AchievementPopup({ isOpen, onClose, completedCount, tota
                                     <span>{language === 'th' ? 'แชร์ไป X' : 'Share to X'}</span>
                                 </button>
 
+                                {/* Credits Button */}
+                                {onCredits && (
+                                    <button
+                                        onClick={onCredits}
+                                        className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[#1a1a2e] to-[#16213e] hover:opacity-90 text-prada-gold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center justify-center gap-2 border border-prada-gold/30"
+                                    >
+                                        <span>{creditsSubmitted ? '🎞️' : '🎬'}</span>
+                                        <span>{creditsSubmitted
+                                            ? (language === 'th' ? 'ดู End Credits' : 'Watch End Credits')
+                                            : (language === 'th' ? 'ลงชื่อใน Credits' : 'Add Me to Credits')
+                                        }</span>
+                                    </button>
+                                )}
 
                             </div>
                         </div>
