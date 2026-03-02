@@ -164,24 +164,25 @@ export default function EndCreditsModal({ isOpen, onClose }: EndCreditsModalProp
             {/* Studio card */}
             <div className="mb-20 text-center">
                 <div className="text-5xl mb-5">👑</div>
-                <p className="text-prada-gold/80 text-[10px] uppercase tracking-[0.5em] mb-3 drop-shadow-md">
+                <p className="text-prada-gold/90 text-xl uppercase tracking-[0.3em] mb-6 drop-shadow-md">
                     {language === 'th' ? 'นำเสนอโดย' : 'Presented by'}
                 </p>
-                <h1 className="text-white text-3xl sm:text-4xl font-bold tracking-[0.2em] mb-2 drop-shadow-lg">NAMTAN TIPNAREE</h1>
-                <h2 className="text-white text-3xl sm:text-4xl font-bold tracking-[0.2em] drop-shadow-lg">× PRADA</h2>
+                <h1 className="text-white text-3xl sm:text-4xl font-bold tracking-[0.2em] mb-4 drop-shadow-lg">NAMTAN TIPNAREE</h1>
+                <p className="text-prada-gold text-4xl font-light mb-4 drop-shadow-lg">×</p>
+                <h2 className="text-white text-3xl sm:text-4xl font-bold tracking-[0.2em] drop-shadow-lg">PRADA</h2>
             </div>
 
             <div className="w-px h-24 bg-gradient-to-b from-prada-gold/40 to-transparent mb-20" />
 
             {/* Title */}
             <div className="text-center mb-24">
-                <p className="text-white/60 text-[9px] uppercase tracking-[0.6em] mb-4 drop-shadow-sm">
+                <p className="text-white/80 text-base uppercase tracking-[0.4em] mb-4 drop-shadow-sm">
                     {language === 'th' ? 'ขอบคุณผู้สนับสนุนทุกท่าน' : 'With Deepest Gratitude To'}
                 </p>
                 <h2 className="text-prada-gold text-3xl font-bold tracking-[0.2em] mb-3 drop-shadow-lg">
                     MISSION SUPPORTERS
                 </h2>
-                <p className="text-white/60 text-xs tracking-widest drop-shadow-sm">
+                <p className="text-white/80 text-base tracking-widest drop-shadow-sm">
                     {language === 'th' ? 'ผู้ที่ทำ Mission ครบทุกภารกิจ 💖' : 'Those who completed every mission 💖'}
                 </p>
             </div>
@@ -210,12 +211,49 @@ export default function EndCreditsModal({ isOpen, onClose }: EndCreditsModalProp
             {/* End section */}
             <div className="mt-24 mb-12 text-center">
                 <div className="w-24 h-px bg-prada-gold/40 mx-auto mb-10" />
-                <p className="text-white/60 text-[9px] uppercase tracking-[0.5em] drop-shadow-sm">
+
+                <p className="text-prada-gold/80 text-base uppercase tracking-[0.3em] mb-8 drop-shadow-sm">
                     {language === 'th' ? 'ขอบคุณทุกคน' : 'Thank You All'}
                 </p>
-                <p className="text-white/90 text-2xl mt-3 drop-shadow-md">💖</p>
+
+                {/* Typographic collage — words flow inline, alternating size & color */}
+                <div className="flex flex-wrap justify-center items-baseline gap-x-3 gap-y-3 px-4 max-w-xs mx-auto">
+                    {[
+                        { text: 'ขอบคุณ', big: true, gold: true },
+                        { text: 'Thank you', big: false, gold: false },
+                        { text: 'ありがとう', big: true, gold: false },
+                        { text: '감사합니다', big: false, gold: true },
+                        { text: '谢谢你', big: true, gold: false },
+                        { text: 'Gracias', big: false, gold: true },
+                        { text: 'Merci', big: true, gold: false },
+                        { text: 'Danke', big: false, gold: false },
+                        { text: 'Terima kasih', big: true, gold: true },
+                        { text: 'Obrigada', big: false, gold: false },
+                        { text: 'Dziękuję', big: true, gold: false },
+                        { text: 'ขอบใจ', big: false, gold: true },
+                        { text: 'شكراً', big: true, gold: false },
+                        { text: 'Salamat', big: false, gold: false },
+                        { text: 'Cảm ơn', big: true, gold: true },
+                        { text: '사랑해', big: true, gold: false },
+                        { text: '💖', big: true, gold: false },
+                    ].map(({ text, big, gold }, i) => (
+                        <span
+                            key={i}
+                            className={[
+                                'font-bold drop-shadow-md leading-tight',
+                                big ? 'text-2xl' : 'text-base',
+                                gold ? 'text-prada-gold' : 'text-white/90',
+                            ].join(' ')}
+                        >
+                            {text}
+                        </span>
+                    ))}
+                </div>
+
+                <p className="text-white/90 text-4xl mt-10 drop-shadow-md">💖</p>
                 <div className="w-24 h-px bg-prada-gold/40 mx-auto mt-8" />
             </div>
+
 
             {/* Outro spacer */}
             <div className="h-screen" />
