@@ -101,65 +101,61 @@ export default function EndCreditsModal({ isOpen, onClose }: EndCreditsModalProp
     /* JS-driven scroll — delta capped at 100ms to prevent freeze after tab backgrounding */
     useEffect(() => {
         if (!isOpen || loading) return;
-        let el: HTMLElement | null = null;
-        const init = () => {
-            el = document.getElementById('end-credits-scroller');
-            if (!el) return;
-            let offset = 0;
-            const startY = window.innerHeight;
-            let rafId: number;
-            const speed = 80;
-            let lastTime: number | null = null;
-            let paused = false;
 
-            const step = (timestamp: number) => {
-                if (lastTime === null) {
-                    lastTime = timestamp;
-                } else {
-                    const delta = Math.min((timestamp - lastTime) / 1000, 0.1);
-                    lastTime = timestamp;
-                    if (!paused && el) {
-                        offset += speed * delta;
-                        const half = el.scrollHeight / 2;
-                        if (half > 0 && offset >= half + startY) offset -= half;
-                        el.style.transform = `translateY(${startY - offset}px) translateZ(0)`;
-                    }
+        // Query directly — element exists because isOpen=true renders it above
+        const el = document.getElementById('end-credits-scroller');
+        if (!el) return;
+
+        let offset = 0;
+        const startY = window.innerHeight;
+        let rafId: number;
+        const speed = 80;
+        let lastTime: number | null = null;
+        let paused = false;
+
+        // Reset position to bottom each time we (re-)open
+        el.style.transform = `translateY(${startY}px) translateZ(0)`;
+
+        const step = (timestamp: number) => {
+            if (lastTime === null) {
+                lastTime = timestamp;
+            } else {
+                // Cap delta — prevents giant jump if tab was backgrounded/throttled
+                const delta = Math.min((timestamp - lastTime) / 1000, 0.1);
+                lastTime = timestamp;
+                if (!paused) {
+                    offset += speed * delta;
+                    const half = el.scrollHeight / 2;
+                    if (half > 0 && offset >= half + startY) offset -= half;
+                    el.style.transform = `translateY(${startY - offset}px) translateZ(0)`;
                 }
-                rafId = requestAnimationFrame(step);
-            };
-
-            const onVisibility = () => { if (document.visibilityState === 'visible') lastTime = null; };
-            const pause = () => { paused = true; };
-            const resume = () => { paused = false; lastTime = null; };
-
-            el.addEventListener('touchstart', pause, { passive: true });
-            el.addEventListener('touchend', resume, { passive: true });
-            el.addEventListener('mouseenter', pause);
-            el.addEventListener('mouseleave', resume);
-            document.addEventListener('visibilitychange', onVisibility);
+            }
             rafId = requestAnimationFrame(step);
-
-            return () => {
-                cancelAnimationFrame(rafId);
-                document.removeEventListener('visibilitychange', onVisibility);
-                if (el) {
-                    el.removeEventListener('touchstart', pause);
-                    el.removeEventListener('touchend', resume);
-                    el.removeEventListener('mouseenter', pause);
-                    el.removeEventListener('mouseleave', resume);
-                }
-            };
         };
-        const timer = setTimeout(() => {
-            const cleanup = init();
-            (window as any).__creditsCleanup = cleanup;
-        }, 100);
+
+        const onVisibility = () => { if (document.visibilityState === 'visible') lastTime = null; };
+        const pause = () => { paused = true; };
+        const resume = () => { paused = false; lastTime = null; };
+
+        el.addEventListener('touchstart', pause, { passive: true });
+        el.addEventListener('touchend', resume, { passive: true });
+        el.addEventListener('mouseenter', pause);
+        el.addEventListener('mouseleave', resume);
+        document.addEventListener('visibilitychange', onVisibility);
+
+        rafId = requestAnimationFrame(step);
+
+        // This cleanup is closure-captured — always cancels exactly the RAF it started
         return () => {
-            clearTimeout(timer);
-            const cleanup = (window as any).__creditsCleanup;
-            if (cleanup) cleanup();
+            cancelAnimationFrame(rafId);
+            document.removeEventListener('visibilitychange', onVisibility);
+            el.removeEventListener('touchstart', pause);
+            el.removeEventListener('touchend', resume);
+            el.removeEventListener('mouseenter', pause);
+            el.removeEventListener('mouseleave', resume);
         };
     }, [isOpen, loading]);
+
 
     if (!isOpen) return null;
 
