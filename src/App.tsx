@@ -2392,6 +2392,7 @@ function App() {
         allTasks={allTasks}
         totalTasksCount={totalTasksList.length}
       />
+
     </div >
   );
 }
