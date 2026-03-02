@@ -31,12 +31,11 @@ function parseCSVCredits(text: string): CreditEntry[] {
     const lines = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
     if (lines.length < 2) return [];
     const headers = parseCSVRow(lines[0]).map(h => h.toLowerCase());
-    // Google Form: col[0]=timestamp, col[1]=Nickname
     const nameIdx = (() => {
         const idx = headers.findIndex(h =>
             h.includes('nickname') || h.includes('name') || h.includes('ชื่อ')
         );
-        return idx >= 0 ? idx : 1; // fallback to col[1]
+        return idx >= 0 ? idx : 1;
     })();
     const entries: CreditEntry[] = [];
     for (let i = 1; i < lines.length; i++) {
@@ -67,7 +66,6 @@ export default function EndCreditsModal({ isOpen, onClose }: EndCreditsModalProp
     const { language } = useLanguage();
     const [entries, setEntries] = useState<CreditEntry[]>([]);
     const [loading, setLoading] = useState(false);
-    const [animKey, setAnimKey] = useState(0); // remount animation on open
 
     const fetchCredits = useCallback(async () => {
         setLoading(true);
@@ -86,14 +84,77 @@ export default function EndCreditsModal({ isOpen, onClose }: EndCreditsModalProp
     useEffect(() => {
         if (isOpen) {
             fetchCredits();
-            setAnimKey(k => k + 1); // restart animation whenever modal opens
         }
     }, [isOpen, fetchCredits]);
 
-    if (!isOpen) return null;
+    // JS-driven scroll — works on iOS Safari and all mobile browsers
+    // CSS @keyframes injected via <style> tags can fail silently on mobile WebKit
+    useEffect(() => {
+        if (!isOpen || loading) return;
 
-    // Duration: ~8s per name, minimum 30s
-    const duration = Math.max(30, entries.length * 8);
+        let el: HTMLElement | null = null;
+
+        // Small delay to ensure the DOM is ready after loading state changes
+        const init = () => {
+            el = document.getElementById('end-credits-scroller');
+            if (!el) return;
+
+            let offset = 0;
+            let rafId: number;
+            const speed = 40; // px per second
+            let lastTime: number | null = null;
+            let paused = false;
+
+            const step = (timestamp: number) => {
+                if (lastTime === null) lastTime = timestamp;
+                const delta = (timestamp - lastTime) / 1000;
+                lastTime = timestamp;
+
+                if (!paused && el) {
+                    offset += speed * delta;
+                    const half = el.scrollHeight / 2;
+                    if (half > 0 && offset >= half) offset -= half;
+                    el.style.transform = `translateY(-${offset}px) translateZ(0)`;
+                }
+
+                rafId = requestAnimationFrame(step);
+            };
+
+            const pause = () => { paused = true; };
+            const resume = () => { paused = false; lastTime = null; };
+
+            el.addEventListener('touchstart', pause, { passive: true });
+            el.addEventListener('touchend', resume, { passive: true });
+            el.addEventListener('mouseenter', pause);
+            el.addEventListener('mouseleave', resume);
+
+            rafId = requestAnimationFrame(step);
+
+            return () => {
+                cancelAnimationFrame(rafId);
+                if (el) {
+                    el.removeEventListener('touchstart', pause);
+                    el.removeEventListener('touchend', resume);
+                    el.removeEventListener('mouseenter', pause);
+                    el.removeEventListener('mouseleave', resume);
+                }
+            };
+        };
+
+        const timer = setTimeout(() => {
+            const cleanup = init();
+            // Store cleanup for the effect cleanup
+            (window as any).__creditsCleanup = cleanup;
+        }, 100);
+
+        return () => {
+            clearTimeout(timer);
+            const cleanup = (window as any).__creditsCleanup;
+            if (cleanup) cleanup();
+        };
+    }, [isOpen, loading]);
+
+    if (!isOpen) return null;
 
     const creditsContent = (
         <div className="flex flex-col items-center px-6 w-full">
@@ -163,22 +224,6 @@ export default function EndCreditsModal({ isOpen, onClose }: EndCreditsModalProp
 
     return (
         <>
-            {/* Inject keyframes */}
-            <style>{`
-        @keyframes creditRoll {
-          from { transform: translateY(0); }
-          to   { transform: translateY(-50%); }
-        }
-        .credit-roll {
-          animation: creditRoll ${duration}s linear infinite;
-          animation-delay: 1s;
-          animation-play-state: running;
-        }
-        .credit-roll:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
-
             <div
                 className="fixed inset-0 z-[120] flex flex-col bg-black overflow-hidden"
                 onClick={onClose}
@@ -216,8 +261,9 @@ export default function EndCreditsModal({ isOpen, onClose }: EndCreditsModalProp
 
                 {/* Scrolling credits — duplicated for seamless loop */}
                 <div
-                    key={animKey}
-                    className="credit-roll flex flex-col items-center w-full"
+                    id="end-credits-scroller"
+                    className="flex flex-col items-center w-full will-change-transform"
+                    style={{ transform: 'translateY(0) translateZ(0)' }}
                     onClick={e => e.stopPropagation()}
                 >
                     {creditsContent}
