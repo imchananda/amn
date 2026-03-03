@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { FaInstagram, FaFacebook, FaYoutube, FaWeibo, FaTiktok } from 'react-icons/fa';
+import { FaXTwitter, FaThreads } from 'react-icons/fa6';
+import { SiXiaohongshu } from 'react-icons/si';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SheetTask {
@@ -97,7 +100,8 @@ const fmtUSD = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDig
 // ของ Namtan = title มีคำว่า "namtan" (case-insensitive)
 // สื่อ / Media = อื่นๆ ที่ title ไม่มีคำว่า "namtan"
 function isNamtanPost(row: { title: string }): boolean {
-    return row.title.toLowerCase().includes('namtan');
+    const t = row.title.toLowerCase();
+    return t.includes('namtan') || t.includes('tipnaree') || t.includes('weerawatnodom');
 }
 
 // ─── CSV Parser ───────────────────────────────────────────────────────────────
@@ -303,10 +307,15 @@ export default function AdminCalculator() {
     // ─── Loading Screen ───────────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-950 flex items-center justify-center text-white">
+            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="text-4xl mb-4 animate-spin">⚙️</div>
-                    <p className="text-gray-400 text-sm tracking-widest uppercase">กำลังโหลดข้อมูล...</p>
+                    <div className="w-16 h-16 mx-auto mb-6 relative">
+                        <div className="absolute inset-0 rounded-full border-4 border-gray-800" />
+                        <div className="absolute inset-0 rounded-full border-4 border-t-rose-500 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                        <div className="absolute inset-2 flex items-center justify-center text-xl">📊</div>
+                    </div>
+                    <p className="text-gray-400 text-sm tracking-widest uppercase font-medium">กำลังโหลดข้อมูล...</p>
+                    <p className="text-gray-700 text-xs mt-2">กำลังดึงข้อมูลจาก Google Sheets</p>
                 </div>
             </div>
         );
@@ -315,183 +324,80 @@ export default function AdminCalculator() {
     const tabs: { id: ActiveSection; label: string; emoji: string }[] = [
         { id: 'ig', label: 'Dashboard', emoji: '📊' },
         { id: 'emv', label: 'EMV', emoji: '💰' },
-        { id: 'miv', label: 'MIV', emoji: '📊' },
+        { id: 'miv', label: 'MIV', emoji: '📈' },
     ];
 
 
     return (
-        <div className="min-h-screen bg-gray-950 text-gray-100" style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif" }}>
-            {/* Top Bar */}
-            <div className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
-                <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="min-h-screen bg-[#0a0a0f] text-gray-100 font-sans">
+            {/* ── Top Bar ─────────────────────────────────────────────────── */}
+            <div className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/80 sticky top-0 z-50">
+                {/* Rose accent line at top */}
+                <div className="h-0.5 bg-gradient-to-r from-rose-600 via-pink-500 to-rose-600" />
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => { window.location.hash = ''; window.location.reload(); }}
-                            className="text-gray-500 hover:text-gray-300 transition-colors text-sm flex items-center gap-1.5"
+                            className="text-gray-500 hover:text-gray-200 transition-colors text-xs flex items-center gap-1.5 group"
                         >
-                            ← หน้าหลัก
+                            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+                            <span>หน้าหลัก</span>
                         </button>
                         <div className="w-px h-4 bg-gray-700" />
-                        <h1 className="text-sm font-bold text-gray-200 tracking-wider">
-                            🔒 Admin Dashboard
-                        </h1>
-                        <span className="text-[10px] bg-rose-900/60 text-rose-300 border border-rose-700/40 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Private</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">🔒</span>
+                            <h1 className="text-sm font-bold text-gray-100 tracking-wide">Admin Dashboard</h1>
+                        </div>
+                        <span className="text-[9px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Private</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        {lastUpdated && <span className="text-[10px] text-gray-600">อัปเดต {lastUpdated}</span>}
+                        {lastUpdated && (
+                            <span className="hidden sm:flex items-center gap-1.5 text-[10px] text-gray-600">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                {lastUpdated}
+                            </span>
+                        )}
                         <button
                             onClick={fetchData}
-                            className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 transition-colors flex items-center gap-1.5"
+                            className="text-xs bg-gray-800 hover:bg-gray-700 active:scale-95 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700/80 transition-all flex items-center gap-1.5"
                         >
-                            🔄 รีเฟรช
+                            🔄 <span className="hidden sm:inline">รีเฟรช</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Section Tabs */}
-                <div className="max-w-5xl mx-auto px-4 pb-0">
-                    <div className="flex gap-0">
+                {/* ── Navigation Tabs ───────────────────────────────────── */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <div className="flex gap-1 pb-0">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveSection(tab.id)}
-                                className={`px-5 py-2.5 text-xs font-bold tracking-wider transition-all border-b-2 ${activeSection === tab.id
-                                    ? 'text-white border-rose-500 bg-gray-800/60'
-                                    : 'text-gray-500 border-transparent hover:text-gray-300 hover:border-gray-600'
+                                className={`relative px-4 sm:px-6 py-2.5 text-xs font-bold tracking-wide transition-all rounded-t-lg ${activeSection === tab.id
+                                    ? 'text-white bg-gray-800 border-t border-l border-r border-gray-700/80'
+                                    : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/40'
                                     }`}
                             >
-                                {tab.emoji} {tab.label}
+                                {activeSection === tab.id && (
+                                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500 rounded-t-full" />
+                                )}
+                                <span className="flex items-center gap-1.5">
+                                    <span>{tab.emoji}</span>
+                                    <span>{tab.label}</span>
+                                </span>
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-5xl mx-auto px-4 py-6">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
                 {/* ================================================================= */}
-                {/* PART 1 – IG ACCOUNT SUMMARY                                        */}
+                {/* PART 1 – IG ACCOUNT SUMMARY (Dashboard)                           */}
                 {/* ================================================================= */}
-                {activeSection === 'ig' && (() => {
-                    // Hardcoded IG follower data (source: instrack.app/instagram/namtan.tipnaree)
-                    const followersBefore = 2817680;
-                    const followersNow = 2827236;
-                    const followerGain = followersNow - followersBefore;
-                    const followerPct = ((followerGain) / followersBefore) * 100;
+                {activeSection === 'ig' && <DashboardSection allTasks={allTasks} />}
 
-                    // Helper: sum engagement for a set of tasks
-                    const sumEng = (tasks: SheetTask[]) => tasks.reduce((acc, t) => ({
-                        likes: acc.likes + t.likes,
-                        comments: acc.comments + t.comments,
-                        shares: acc.shares + t.shares,
-                        reposts: acc.reposts + t.reposts,
-                        views: acc.views + t.views,
-                        saves: acc.saves + t.saves,
-                    }), { likes: 0, comments: 0, shares: 0, reposts: 0, views: 0, saves: 0 });
-                    const totalEng = (e: ReturnType<typeof sumEng>) => e.likes + e.comments + e.shares + e.reposts + e.views + e.saves;
-
-                    const namtanTasks = allTasks.filter(t => isNamtanPost(t));
-                    const mediaTasks = allTasks.filter(t => !isNamtanPost(t));
-
-                    // Platform groups
-                    const platformGroups: { title: string; emoji: string; platforms: string[] }[] = [
-                        { title: 'Instagram', emoji: '📸', platforms: ['instagram'] },
-                        { title: 'X (Twitter)', emoji: '🐦', platforms: ['x'] },
-                        { title: 'TikTok', emoji: '🎵', platforms: ['tiktok'] },
-                        { title: 'Facebook', emoji: '👥', platforms: ['facebook'] },
-                        { title: 'อื่นๆ (YouTube / Threads / Weibo / RED)', emoji: '🌐', platforms: ['youtube', 'threads', 'weibo', 'red'] },
-                    ];
-
-                    const EngRow = ({ label, tasks }: { label: string; tasks: SheetTask[] }) => {
-                        const e = sumEng(tasks);
-                        const total = totalEng(e);
-                        if (total === 0 && tasks.length === 0) return null;
-                        return (
-                            <div className="bg-gray-800/40 rounded-xl p-4 border border-gray-700/50">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-bold text-gray-300">{label}</span>
-                                    <span className="text-[10px] text-gray-500">{fmt(tasks.length)} โพสต์</span>
-                                </div>
-                                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
-                                    {([
-                                        { k: 'likes', label: 'Likes', v: e.likes },
-                                        { k: 'comments', label: 'Comments', v: e.comments },
-                                        { k: 'shares', label: 'Shares', v: e.shares },
-                                        { k: 'reposts', label: 'Reposts', v: e.reposts },
-                                        { k: 'views', label: 'Views', v: e.views },
-                                        { k: 'saves', label: 'Saves', v: e.saves },
-                                    ]).map(m => (
-                                        <div key={m.k} className="text-center">
-                                            <div className="text-[8px] text-gray-600 uppercase tracking-wider mb-0.5">{m.label}</div>
-                                            <div className={`text-xs font-black ${m.v > 0 ? 'text-white' : 'text-gray-700'}`}>{fmt(m.v)}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
-                                    <span className="text-[10px] text-gray-500 uppercase tracking-wider">Total Engagement</span>
-                                    <span className="text-sm font-black text-rose-400">{fmt(total)}</span>
-                                </div>
-                            </div>
-                        );
-                    };
-
-                    return (
-                        <div className="space-y-6">
-                            <SectionHeader emoji="📊" title="Overall Dashboard" subtitle="ข้อมูลระหว่างวันที่ 24 กพ - 4 มีค — ทุก Platform รวมกัน (Read-Only)" />
-
-                            {/* ── Follower Stats ─────────────────────────────────── */}
-                            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5">
-                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">👥 ยอดฟอลโลเวอร์ IG (@namtanreal)</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div className="bg-gray-800/60 rounded-xl p-4 border border-gray-700/50 text-center">
-                                        <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-1">ก่อนออกอีเวนต์ (22 Feb)</span>
-                                        <span className="text-2xl font-black text-gray-200">{fmt(followersBefore)}</span>
-                                    </div>
-                                    <div className="bg-gray-800/60 rounded-xl p-4 border border-gray-700/50 text-center">
-                                        <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-1">ปัจจุบัน</span>
-                                        <span className="text-2xl font-black text-white">{fmt(followersNow)}</span>
-                                        <a href="https://instrack.app/instagram/namtan.tipnaree" target="_blank" rel="noreferrer" className="text-[9px] text-rose-400 hover:underline block mt-1">instrack.app ↗</a>
-                                    </div>
-                                    <div className="bg-gray-800/60 rounded-xl p-4 border border-gray-700/50 text-center flex flex-col justify-center items-center">
-                                        <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">เพิ่มขึ้น</span>
-                                        <span className={`text-3xl font-black ${followerPct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                            {followerPct >= 0 ? '+' : ''}{followerPct.toFixed(2)}%
-                                        </span>
-                                        <span className="text-xs text-gray-500 mt-1">+{fmt(followerGain)} คน</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* ── Combined All Platforms ─────────────────────────── */}
-                            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5">
-                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">🌐 ยอด Engagement รวมทุก Platform</h3>
-                                <div className="space-y-3">
-                                    <EngRow label="👤 ของ Namtan (ทุก Platform)" tasks={namtanTasks} />
-                                    <EngRow label="📰 สื่อทั้งหมด (ทุก Platform)" tasks={mediaTasks} />
-                                </div>
-                            </div>
-
-                            {/* ── Per-Platform Sections ─────────────────────────── */}
-                            {platformGroups.map(group => {
-                                const groupNamtan = namtanTasks.filter(t => group.platforms.includes(t.platform));
-                                const groupMedia = mediaTasks.filter(t => group.platforms.includes(t.platform));
-                                const hasData = (groupNamtan.length + groupMedia.length) > 0;
-                                if (!hasData) return null;
-                                return (
-                                    <div key={group.title} className="bg-gray-900 rounded-2xl border border-gray-800 p-5">
-                                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
-                                            {group.emoji} ยอด Engagement — {group.title}
-                                        </h3>
-                                        <div className="space-y-3">
-                                            {groupNamtan.length > 0 && <EngRow label="👤 ของ Namtan" tasks={groupNamtan} />}
-                                            {groupMedia.length > 0 && <EngRow label="📰 สื่อทั้งหมด" tasks={groupMedia} />}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    );
-                })()}
 
                 {/* ================================================================= */}
                 {/* PART 2 – EMV CALCULATOR                                            */}
@@ -532,26 +438,204 @@ export default function AdminCalculator() {
                 )}
 
             </div>
-        </div>
+        </div >
     );
 }
 
-// ─── Sub-Components ───────────────────────────────────────────────────────────
 
-function SectionHeader({ emoji, title, subtitle }: { emoji: string; title: string; subtitle: string }) {
-    return (
-        <div className="flex items-start gap-3">
-            <div className="text-3xl">{emoji}</div>
+// ─── Dashboard Section (Interactive Hooks) ──────────────────────────────────
+function DashboardSection({ allTasks }: { allTasks: SheetTask[] }) {
+    const followersBefore = 2817680;
+    const followersNow = 2827236;
+    const followerGain = followersNow - followersBefore;
+    const followerPct = (followerGain / followersBefore) * 100;
+
+    const sumEng = (tasks: SheetTask[]) => tasks.reduce((acc, t) => ({
+        likes: acc.likes + t.likes,
+        comments: acc.comments + t.comments,
+        shares: acc.shares + t.shares,
+        reposts: acc.reposts + t.reposts,
+        views: acc.views + t.views,
+        saves: acc.saves + t.saves,
+    }), { likes: 0, comments: 0, shares: 0, reposts: 0, views: 0, saves: 0 });
+    const totalEng = (e: ReturnType<typeof sumEng>) =>
+        e.likes + e.comments + e.shares + e.reposts + e.views + e.saves;
+
+    const namtanTasks = allTasks.filter(t => isNamtanPost(t));
+    const mediaTasks = allTasks.filter(t => !isNamtanPost(t));
+
+    const ENG_LABELS = [
+        { k: 'likes', label: 'Likes ❤️' },
+        { k: 'comments', label: 'Comments 💬' },
+        { k: 'shares', label: 'Shares 📤' },
+        { k: 'reposts', label: 'Reposts 🔁' },
+        { k: 'views', label: 'Views 👁️' },
+        { k: 'saves', label: 'Saves 🔖' },
+    ] as const;
+
+    const platformGroups: { id: string; title: string; icon: React.ReactNode; platforms: string[]; glow: string; border: string; activeCls: string }[] = [
+        { id: 'instagram', title: 'Instagram', icon: <FaInstagram />, platforms: ['instagram'], glow: 'bg-pink-500/10', border: 'border-pink-500/40', activeCls: 'bg-gradient-to-br from-pink-500/15 to-gray-900 border-pink-500/40 text-pink-300' },
+        { id: 'x', title: 'X', icon: <FaXTwitter />, platforms: ['x'], glow: 'bg-gray-500/10', border: 'border-gray-400/40', activeCls: 'bg-gradient-to-br from-gray-500/15 to-gray-900 border-gray-400/40 text-gray-200' },
+        { id: 'tiktok', title: 'TikTok', icon: <FaTiktok />, platforms: ['tiktok'], glow: 'bg-cyan-500/10', border: 'border-cyan-500/40', activeCls: 'bg-gradient-to-br from-cyan-500/15 to-gray-900 border-cyan-500/40 text-cyan-300' },
+        { id: 'facebook', title: 'Facebook', icon: <FaFacebook />, platforms: ['facebook'], glow: 'bg-blue-500/10', border: 'border-blue-500/40', activeCls: 'bg-gradient-to-br from-blue-500/15 to-gray-900 border-blue-500/40 text-blue-300' },
+        { id: 'youtube', title: 'YouTube', icon: <FaYoutube />, platforms: ['youtube'], glow: 'bg-red-500/10', border: 'border-red-500/40', activeCls: 'bg-gradient-to-br from-red-500/15 to-gray-900 border-red-500/40 text-red-300' },
+        { id: 'threads', title: 'Threads', icon: <FaThreads />, platforms: ['threads', 'th', 'thread'], glow: 'bg-neutral-500/10', border: 'border-neutral-400/40', activeCls: 'bg-gradient-to-br from-neutral-500/15 to-gray-900 border-neutral-400/40 text-neutral-200' },
+        { id: 'weibo', title: 'Weibo', icon: <FaWeibo />, platforms: ['weibo'], glow: 'bg-yellow-500/10', border: 'border-yellow-500/40', activeCls: 'bg-gradient-to-br from-yellow-500/15 to-gray-900 border-yellow-500/40 text-yellow-300' },
+        { id: 'red', title: 'RED', icon: <SiXiaohongshu />, platforms: ['red'], glow: 'bg-rose-500/10', border: 'border-rose-500/40', activeCls: 'bg-gradient-to-br from-rose-500/15 to-gray-900 border-rose-500/40 text-rose-300' },
+    ];
+
+    const [activeTab, setActiveTab] = useState('instagram');
+
+    // Sub-block inside a platform card
+    const SubSection = ({ label, tasks }: { label: string; tasks: SheetTask[] }) => {
+        if (tasks.length === 0) return null;
+        const e = sumEng(tasks);
+        const total = totalEng(e);
+        return (
             <div>
-                <h2 className="text-lg font-black text-white tracking-wide">{title}</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-gray-400">{label}</span>
+                    <span className="text-[10px] text-gray-600">{fmt(tasks.length)} โพสต์</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                    {ENG_LABELS.map(m => (
+                        <div key={m.k} className="bg-gray-800/70 rounded-xl p-3 border border-gray-600/60 flex flex-col items-center justify-center text-center hover:border-gray-500/80 transition-colors">
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest mb-1 block w-full truncate">{m.label}</span>
+                            <span className="text-lg font-black text-white">{fmt(e[m.k])}</span>
+                        </div>
+                    ))}
+                </div>
+                {total > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between">
+                        <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Total Engagement</span>
+                        <span className="text-xl font-black bg-gradient-to-r from-emerald-400 via-cyan-300 to-sky-400 bg-clip-text text-transparent">{fmt(total)}</span>
+                    </div>
+                )}
             </div>
+        );
+    };
+
+    return (
+        <div className="space-y-5">
+            {/* Page title */}
+            <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-xl flex-shrink-0">📊</div>
+                <div>
+                    <h2 className="text-lg font-black text-white tracking-wide">Overall Dashboard</h2>
+                    <p className="text-[11px] text-gray-500 mt-0.5">ข้อมูลระหว่างวันที่ 24 กพ - 4 มีค · Read-Only</p>
+                </div>
+            </div>
+
+            {/* ── Follower Stats ───────────────────────────────── */}
+            <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-pink-500/25 p-5 shadow-xl relative overflow-hidden shadow-pink-500/5">
+                <div className="absolute top-0 right-0 p-40 bg-pink-500/10 rounded-full blur-3xl" />
+                <h3 className="text-xs font-bold text-pink-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span>📸</span> ยอดฟอลโลเวอร์ Instagram · namtan.tipnaree
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 relative z-10">
+                    <div className="bg-gray-800/50 backdrop-blur rounded-xl p-4 border border-gray-700/50 text-center">
+                        <div className="text-[9px] text-gray-400 uppercase tracking-widest mb-2">ก่อนอีเวนต์ · 22 Feb</div>
+                        <div className="text-2xl font-black text-gray-400 tabular-nums">{fmt(followersBefore)}</div>
+                    </div>
+                    <div className="bg-gray-800/80 backdrop-blur rounded-xl p-4 border border-pink-500/20 text-center shadow-[0_0_15px_rgba(236,72,153,0.1)]">
+                        <div className="text-[9px] text-pink-400 uppercase tracking-widest mb-2">ปัจจุบัน</div>
+                        <div className="text-2xl font-black text-white tabular-nums">{fmt(followersNow)}</div>
+                        <a href="https://instrack.app/instagram/namtan.tipnaree" target="_blank" rel="noreferrer"
+                            className="text-[9px] text-gray-500 hover:text-white hover:underline mt-1 inline-flex items-center gap-0.5 transition-colors">
+                            instrack.app ↗
+                        </a>
+                    </div>
+                    <div className="bg-gray-800/50 backdrop-blur rounded-xl p-4 border border-gray-700/50 text-center">
+                        <div className="text-[9px] text-gray-400 uppercase tracking-widest mb-2">เพิ่มขึ้น</div>
+                        <div className={`text-2xl font-black tabular-nums ${followerPct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {followerPct >= 0 ? '+' : ''}{followerPct.toFixed(2)}%
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">+{fmt(followerGain)} คน</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Combined All Platforms ────────────────────────── */}
+            <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-indigo-500/25 p-5 shadow-xl relative overflow-hidden shadow-indigo-500/5">
+                <div className="absolute top-0 right-0 p-40 bg-indigo-500/10 rounded-full blur-3xl" />
+                <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
+                    <span>🌐</span> ยอด Engagement รวมทุก Platform
+                </h3>
+                <div className="space-y-6 relative z-10">
+                    <SubSection label="👤 Namtan — ทุก Platform" tasks={namtanTasks} />
+                    <div className="border-t border-gray-800" />
+                    <SubSection label="📰 สื่อทั้งหมด — ทุก Platform" tasks={mediaTasks} />
+                </div>
+            </div>
+
+            {/* ── Per-Platform Tabbed Sections ────────────────────────────── */}
+            {(() => {
+                const activeGroup = platformGroups.find(g => g.id === activeTab);
+                return (
+                    <div className={`rounded-2xl border shadow-xl overflow-hidden transition-all duration-300 ${activeGroup ? activeGroup.border : 'border-gray-800'}`}>
+                        {/* Platform Tabs Header */}
+                        <div className="border-b border-gray-700/50 bg-black/30 p-2 sm:p-3 overflow-x-auto no-scrollbar">
+                            <div className="flex gap-1.5 min-w-max">
+                                {platformGroups.map(group => {
+                                    const groupCount = allTasks.filter(t => group.platforms.includes(t.platform)).length;
+                                    if (groupCount === 0) return null;
+                                    const isActive = activeTab === group.id;
+
+                                    return (
+                                        <button
+                                            key={group.id}
+                                            onClick={() => setActiveTab(group.id)}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold tracking-wide transition-all duration-200 border ${isActive ? `${group.activeCls} shadow-md` : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-gray-800/60'
+                                                }`}
+                                        >
+                                            <span className="text-base">{group.icon}</span>
+                                            <span className="uppercase tracking-widest">{group.title}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Active Platform Content */}
+                        <div className="p-5">
+                            {(() => {
+                                const grp = platformGroups.find(g => g.id === activeTab);
+                                if (grp) return <div className={`absolute inset-x-0 top-0 h-0.5 ${grp.glow.replace('bg-', 'bg-gradient-to-r via-').replace('/10', '/60').replace('/8', '/50')}`} />;
+                                return null;
+                            })()}
+                            {platformGroups.filter(g => g.id === activeTab).map(group => {
+                                const groupNamtan = namtanTasks.filter(t => group.platforms.includes(t.platform));
+                                const groupMedia = mediaTasks.filter(t => group.platforms.includes(t.platform));
+
+                                if (groupNamtan.length + groupMedia.length === 0) {
+                                    return (
+                                        <div key={group.id} className="text-center py-10 text-gray-600 text-sm">
+                                            ไม่มีข้อมูลโพสต์ของแพลตฟอร์มนี้ในช่วงเวลาที่กำหนด
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div key={group.id} className="space-y-6">
+                                        {groupNamtan.length > 0 && <SubSection label="👤 Namtan" tasks={groupNamtan} />}
+                                        {groupNamtan.length > 0 && groupMedia.length > 0 && (
+                                            <div className="border-t border-gray-800" />
+                                        )}
+                                        {groupMedia.length > 0 && <SubSection label="📰 สื่อทั้งหมด" tasks={groupMedia} />}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }
 
 
 // ─── EMV / MIV Section (shared) ───────────────────────────────────────────────
+
 interface EMVSectionProps {
     title: string;
     subtitle: string;
@@ -572,6 +656,25 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
     const [filterPlatform, setFilterPlatform] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('all');
     const [igSumViewMode, setIgSumViewMode] = useState<ViewMode>('all');
+
+    // ── EMV Calculation Method ──────────────────────────────────────────
+    const [calcMethod, setCalcMethod] = useState<1 | 2 | 3 | 4>(1);
+
+    // Method 2 (was 3): per-platform per-metric rates
+    const [m3Mults, setM3Mults] = useState<Record<string, Record<string, number>>>({
+        instagram: { impression: 22.62, view: 0.12, like: 0.093, comment: 4.52, share: 0, repost: 0 },
+        facebook: { impression: 18.48, view: 0.16, like: 0.23, comment: 3.70, share: 2.04, repost: 0 },
+        x: { impression: 9.79, view: 0.093, like: 0.60, comment: 0, share: 1.93, repost: 2.83 },
+        youtube: { impression: 8.71, view: 0.13, like: 1.01, comment: 9.14, share: 4.22, repost: 0 },
+        tiktok: { impression: 0, view: 0.058, like: 0.093, comment: 4.52, share: 2.19, repost: 0 },
+    });
+
+    // Method 3 (was 4): IG-only estimated rates
+    const [m4Mults, setM4Mults] = useState({ like: 0.01, comment: 0.10, share: 0.5, view: 0.03 });
+
+    // Method 4: custom formula (user-defined)
+    const [m4Formula, setM4Formula] = useState('likes * 0.01 + comments * 0.10 + shares * 0.5 + views * 0.03');
+    const [m4FormulaError, setM4FormulaError] = useState('');
 
     const enabledField: keyof PlatformCPM = isMIV ? 'enabledMIV' : 'enabled';
     const enabledPlatforms = cpmConfig.filter(c => c[enabledField]);
@@ -629,37 +732,189 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
         return { platform, pc, eng, total };
     }).filter(p => p.total > 0);
 
-    // calculate EMV dynamically based on filtered rows
+    // calculate EMV dynamically based on filtered rows & selected method
     const result = useMemo(() => {
         let total = 0;
         const byPlatform: Record<string, { impressions: number; emv: number; posts: number }> = {};
         filteredRows.forEach(row => {
             if (!row.included) return;
-            const pc = cpmConfig.find(c => c.key === row.platform);
-            if (!pc || !pc[enabledField]) return;
-            const eff = (row.overrideLikes ?? row.likes)
-                + (row.overrideComments ?? row.comments)
-                + (row.overrideShares ?? row.shares)
-                + (row.overrideReposts ?? row.reposts)
-                + (row.overrideViews ?? row.views)
-                + (row.overrideSaves ?? row.saves);
-            const emv = (eff * pc.cpm) / 1000;
+
+            const likes = row.overrideLikes ?? row.likes;
+            const comments = row.overrideComments ?? row.comments;
+            const shares = row.overrideShares ?? row.shares;
+            const reposts = row.overrideReposts ?? row.reposts;
+            const views = row.overrideViews ?? row.views;
+            const saves = row.overrideSaves ?? row.saves;
+            const totalEng = likes + comments + shares + reposts + views + saves;
+
+            let emv = 0;
+
+            if (calcMethod === 1) {
+                const pc = cpmConfig.find(c => c.key === row.platform);
+                if (!pc || !pc[enabledField]) return;
+                emv = (totalEng * pc.cpm) / 1000;
+            } else if (calcMethod === 2) {
+                const mults = m3Mults[row.platform];
+                if (!mults) return;
+                emv = (views / 1000 * (mults.impression ?? 0))
+                    + (views * (mults.view ?? 0))
+                    + (likes * (mults.like ?? 0))
+                    + (comments * (mults.comment ?? 0))
+                    + (shares * (mults.share ?? 0))
+                    + (reposts * (mults.repost ?? 0));
+            } else if (calcMethod === 3) {
+                if (row.platform !== 'instagram') return;
+                emv = (likes * m4Mults.like)
+                    + (comments * m4Mults.comment)
+                    + (shares * m4Mults.share)
+                    + (views * m4Mults.view);
+            } else if (calcMethod === 4) {
+                try {
+                    // eslint-disable-next-line no-new-func
+                    const fn = new Function('likes', 'comments', 'shares', 'reposts', 'views', 'saves', 'totalEng', `return (${m4Formula})`);
+                    emv = Number(fn(likes, comments, shares, reposts, views, saves, totalEng)) || 0;
+                } catch { return; }
+            }
+
             total += emv;
             if (!byPlatform[row.platform]) byPlatform[row.platform] = { impressions: 0, emv: 0, posts: 0 };
-            byPlatform[row.platform].impressions += eff;
+            byPlatform[row.platform].impressions += totalEng;
             byPlatform[row.platform].emv += emv;
             byPlatform[row.platform].posts += 1;
         });
         return { total, byPlatform };
-    }, [filteredRows, cpmConfig, enabledField]);
+    }, [filteredRows, cpmConfig, enabledField, calcMethod, m3Mults, m4Mults, m4Formula]);
 
     return (
-        <div className="space-y-6">
-            <SectionHeader emoji={isMIV ? '📊' : '💰'} title={title} subtitle={subtitle} />
-            <div className="bg-amber-950/20 border border-amber-700/30 rounded-xl px-4 py-3 text-xs text-amber-300/80">
-                💡 {note}
+        <div className="space-y-5">
+            {/* Section Header */}
+            <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${isMIV ? 'bg-blue-500/20 border border-blue-500/30' : 'bg-emerald-500/20 border border-emerald-500/30'
+                    }`}>
+                    {isMIV ? '📈' : '💰'}
+                </div>
+                <div>
+                    <h2 className="text-lg font-black text-white tracking-wide">{title}</h2>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{subtitle}</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-2 bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 text-xs text-amber-300/70">
+                <span className="text-base">💡</span>
+                <span>{note}</span>
             </div>
 
+            {/* ── Method Selector ─────────────────────────────────── */}
+            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
+                <div className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3">⚗️ เลือกวิธีคำนวณ</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-0">
+                    {([
+                        { id: 1 as const, label: 'Method 1', desc: '(Eng × CPM) / 1000' },
+                        { id: 2 as const, label: 'Method 2', desc: 'Per-Metric Rate' },
+                        { id: 3 as const, label: 'Method 3', desc: 'IG Estimated' },
+                        { id: 4 as const, label: 'Method 4', desc: 'Custom Formula ✍️' },
+                    ]).map(m => (
+                        <button key={m.id} onClick={() => setCalcMethod(m.id)}
+                            className={`p-3 rounded-xl border text-left transition-all ${calcMethod === m.id
+                                    ? 'bg-rose-600/20 border-rose-500/50 text-rose-300'
+                                    : 'bg-gray-800/40 border-gray-700/50 text-gray-500 hover:text-gray-300 hover:border-gray-600'
+                                }`}>
+                            <div className="text-xs font-black">{m.label}</div>
+                            <div className="text-[10px] mt-0.5 opacity-70">{m.desc}</div>
+                        </button>
+                    ))}
+                </div>
+
+                {/* Method 1 note */}
+                {calcMethod === 1 && (
+                    <div className="mt-3 pt-3 border-t border-gray-800 text-[10px] text-gray-500">
+                        สูตร: <span className="text-gray-300 font-mono">EMV = (Total Engagement × CPM) / 1000</span>
+                        <span className="ml-2 text-gray-600">— ตั้งค่า CPM ด้านล่าง</span>
+                    </div>
+                )}
+
+                {/* Method 2 config: per-platform per-metric rates */}
+                {calcMethod === 2 && (
+                    <div className="mt-3 pt-3 border-t border-gray-800">
+                        <div className="text-[10px] text-gray-500 mb-3">สูตร: <span className="text-gray-300 font-mono">EMV = (Views/1k × imp) + (view×V) + (like×L) + (comment×C) + (share×S) + (repost×R)</span></div>
+                        <div className="space-y-3">
+                            {Object.entries(m3Mults).map(([platform, mults]) => (
+                                <div key={platform} className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/50">
+                                    <div className="text-[10px] font-bold text-gray-200 uppercase tracking-widest mb-2 capitalize">{platform}</div>
+                                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                                        {Object.entries(mults).map(([metric, val]) => (
+                                            <div key={metric} className="flex flex-col gap-1">
+                                                <span className="text-[9px] text-gray-500 capitalize">{metric === 'impression' ? 'per 1k Imp' : `per ${metric}`}</span>
+                                                <input type="number" step="0.001" min="0" value={val}
+                                                    onChange={e => setM3Mults(p => ({ ...p, [platform]: { ...p[platform], [metric]: parseFloat(e.target.value) || 0 } }))}
+                                                    className="text-right bg-gray-700/60 text-white text-xs font-bold rounded px-1.5 py-1 outline-none border border-gray-600/50 focus:border-rose-500 transition-colors" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Method 3 config: IG Estimated */}
+                {calcMethod === 3 && (
+                    <div className="mt-3 pt-3 border-t border-gray-800">
+                        <div className="text-[10px] text-gray-500 mb-3">Estimated EMV สำหรับ <span className="text-pink-400 font-bold">Instagram เท่านั้น</span></div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {(Object.keys(m4Mults) as (keyof typeof m4Mults)[]).map(metric => (
+                                <div key={metric} className="flex flex-col gap-1">
+                                    <span className="text-[9px] text-gray-500 capitalize">per {metric}</span>
+                                    <input type="number" step="0.001" min="0" value={m4Mults[metric]}
+                                        onChange={e => setM4Mults(p => ({ ...p, [metric]: parseFloat(e.target.value) || 0 }))}
+                                        className="text-right bg-gray-700/80 text-white text-sm font-bold rounded-lg px-2 py-1 outline-none border border-gray-600 focus:border-rose-500 transition-colors" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Method 4: Custom Formula Builder */}
+                {calcMethod === 4 && (
+                    <div className="mt-3 pt-3 border-t border-gray-800">
+                        <div className="text-[10px] text-gray-500 mb-2">
+                            เขียนสูตรของตัวเองได้เลย — ตัวแปรที่ใช้ได้:
+                            {['likes', 'comments', 'shares', 'reposts', 'views', 'saves', 'totalEng'].map(v => (
+                                <code key={v} className="ml-1.5 bg-gray-700/60 text-cyan-300 px-1.5 py-0.5 rounded text-[9px]">{v}</code>
+                            ))}
+                        </div>
+                        <input
+                            value={m4Formula}
+                            onChange={e => {
+                                setM4Formula(e.target.value);
+                                try {
+                                    // eslint-disable-next-line no-new-func
+                                    new Function('likes', 'comments', 'shares', 'reposts', 'views', 'saves', 'totalEng', `return (${e.target.value})`);
+                                    setM4FormulaError('');
+                                } catch (err) { setM4FormulaError(String(err)); }
+                            }}
+                            placeholder="e.g. likes * 0.5 + views * 0.02"
+                            className={`w-full bg-gray-800 text-white font-mono text-sm rounded-xl px-4 py-3 outline-none border transition-colors mt-2 ${m4FormulaError ? 'border-red-500/60' : 'border-gray-600 focus:border-rose-500'
+                                }`}
+                        />
+                        {m4FormulaError
+                            ? <div className="mt-1.5 text-[10px] text-red-400">{m4FormulaError}</div>
+                            : m4Formula && <div className="mt-1.5 text-[10px] text-emerald-400">✓ Formula valid</div>
+                        }
+                        <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                            {[
+                                { label: '[ IG Estimated ]', f: 'likes * 0.01 + comments * 0.10 + shares * 0.5 + views * 0.03' },
+                                { label: '[ Total Eng × 1 ]', f: 'totalEng * 1' },
+                                { label: '[ Views × 0.12 + Likes × 0.09 ]', f: 'views * 0.12 + likes * 0.093' },
+                            ].map(p => (
+                                <button key={p.label} onClick={() => { setM4Formula(p.f); setM4FormulaError(''); }}
+                                    className="text-[9px] text-gray-400 bg-gray-800/60 hover:bg-gray-700/60 hover:text-gray-200 border border-gray-700/50 rounded-lg px-3 py-2 text-left transition-colors">
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
             {/* ── Engagement Summary (Read-Only) ──────────────────────────────── */}
             {!isMIV ? (
                 /* EMV: IG only with Namtan/Media toggle */
@@ -742,114 +997,128 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
                 </div>
             )}
 
-            {/* ── CPM Config ───────────────────────────────────────────────── */}
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">⚙️ ตั้งค่า CPM ต่อ Platform</h3>
-                    <button
-                        onClick={addPlatform}
-                        className="text-[10px] bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                        + เพิ่ม Platform
-                    </button>
-                </div>
-                <div className="space-y-2">
-                    {cpmConfig.map(pc => (
-                        <div key={pc.key} className="flex items-center gap-3 bg-gray-800/50 rounded-xl px-4 py-2.5 border border-gray-700/50">
-                            {/* Enable toggle */}
-                            <button
-                                onClick={() => updateCPM(pc.key, enabledField, !pc[enabledField])}
-                                className={`w-8 h-5 rounded-full transition-all flex-shrink-0 relative ${pc[enabledField] ? 'bg-rose-600' : 'bg-gray-700'}`}
-                            >
-                                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${pc[enabledField] ? 'left-3.5' : 'left-0.5'}`} />
-                            </button>
+            {/* ── CPM Config — Method 1 only ──────────────────────────────── */}
+            {calcMethod === 1 && (
+                <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">⚙️ ตั้งค่า CPM ต่อ Platform</h3>
+                        <button
+                            onClick={addPlatform}
+                            className="text-[10px] bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                            + เพิ่ม Platform
+                        </button>
+                    </div>
+                    <div className="space-y-2">
+                        {cpmConfig.map(pc => (
+                            <div key={pc.key} className="flex items-center gap-3 bg-gray-800/50 rounded-xl px-4 py-2.5 border border-gray-700/50">
+                                {/* Enable toggle */}
+                                <button
+                                    onClick={() => updateCPM(pc.key, enabledField, !pc[enabledField])}
+                                    className={`w-8 h-5 rounded-full transition-all flex-shrink-0 relative ${pc[enabledField] ? 'bg-rose-600' : 'bg-gray-700'}`}
+                                >
+                                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${pc[enabledField] ? 'left-3.5' : 'left-0.5'}`} />
+                                </button>
 
-                            {/* Emoji + Name */}
-                            <span className="text-lg flex-shrink-0">{pc.emoji}</span>
-                            <input
-                                className="w-28 bg-transparent text-sm font-semibold text-gray-200 outline-none border-b border-gray-700 focus:border-rose-500 transition-colors"
-                                value={pc.label}
-                                onChange={e => updateCPM(pc.key, 'label', e.target.value)}
-                            />
-
-                            {/* CPM input */}
-                            <div className="flex-1 flex items-center gap-2 justify-end">
-                                <span className="text-[10px] text-gray-600 uppercase tracking-wider">CPM</span>
-                                <span className="text-gray-600 text-sm">$</span>
+                                {/* Emoji + Name */}
+                                <span className="text-lg flex-shrink-0">{pc.emoji}</span>
                                 <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={pc.cpm}
-                                    onChange={e => updateCPM(pc.key, 'cpm', parseFloat(e.target.value) || 0)}
-                                    className="w-24 text-right bg-gray-700/80 text-white text-sm font-bold rounded-lg px-2 py-1 outline-none border border-gray-600 focus:border-rose-500 transition-colors"
+                                    className="w-28 bg-transparent text-sm font-semibold text-gray-200 outline-none border-b border-gray-700 focus:border-rose-500 transition-colors"
+                                    value={pc.label}
+                                    onChange={e => updateCPM(pc.key, 'label', e.target.value)}
                                 />
-                                <span className="text-[10px] text-gray-600">/ 1k</span>
-                            </div>
 
-                            {/* EMV result for this platform */}
-                            {result.byPlatform[pc.key] && (
-                                <span className="text-xs font-bold text-emerald-400 flex-shrink-0 min-w-[80px] text-right">
-                                    {fmtUSD(result.byPlatform[pc.key].emv)}
-                                </span>
-                            )}
-                        </div>
-                    ))}
+                                {/* CPM input */}
+                                <div className="flex-1 flex items-center gap-2 justify-end">
+                                    <span className="text-[10px] text-gray-600 uppercase tracking-wider">CPM</span>
+                                    <span className="text-gray-600 text-sm">$</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={pc.cpm}
+                                        onChange={e => updateCPM(pc.key, 'cpm', parseFloat(e.target.value) || 0)}
+                                        className="w-24 text-right bg-gray-700/80 text-white text-sm font-bold rounded-lg px-2 py-1 outline-none border border-gray-600 focus:border-rose-500 transition-colors"
+                                    />
+                                    <span className="text-[10px] text-gray-600">/ 1k</span>
+                                </div>
+
+                                {/* EMV result for this platform */}
+                                {result.byPlatform[pc.key] && (
+                                    <span className="text-xs font-bold text-emerald-400 flex-shrink-0 min-w-[80px] text-right">
+                                        {fmtUSD(result.byPlatform[pc.key].emv)}
+                                    </span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )} {/* end calcMethod===1 CPM config */}
 
             {/* ── Result Summary ────────────────────────────────────────────── */}
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800/60 rounded-2xl border border-gray-700 p-5">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">📈 ผลการคำนวณ</h3>
+            <div className={`rounded-2xl border overflow-hidden ${isMIV ? 'border-blue-700/30 bg-gradient-to-br from-blue-950/40 to-gray-900' : 'border-emerald-700/30 bg-gradient-to-br from-emerald-950/40 to-gray-900'
+                }`}>
+                <div className="p-5">
+                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total {isMIV ? 'MIV' : 'EMV'}</div>
+                    <div className={`text-5xl font-black tabular-nums mb-1 ${isMIV ? 'text-blue-400' : 'text-emerald-400'}`}>
+                        {fmtUSD(result.total)}
+                    </div>
+                    <div className="text-[10px] text-gray-600 mb-5">
+                        {fmt(filteredRows.filter(r => r.included).length)} โพสต์ที่นับ จาก {fmt(filteredRows.length)} (ตามฟิลเตอร์)
+                    </div>
 
-                {/* Total */}
-                <div className="text-center py-4 border-b border-gray-800 mb-4">
-                    <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-1">Total {isMIV ? 'MIV' : 'EMV'}</p>
-                    <p className="text-4xl font-black text-emerald-400">{fmtUSD(result.total)}</p>
-                    <p className="text-xs text-gray-600 mt-1">{fmt(filteredRows.filter(r => r.included).length)} โพสต์ที่นับ จาก {fmt(filteredRows.length)} ทั้งหมด (ตามฟิลเตอร์ปัจจุบัน)</p>
-                </div>
-
-                {/* By Platform */}
-                <div className="space-y-2">
-                    {enabledPlatforms.map(pc => {
-                        const d = result.byPlatform[pc.key];
-                        if (!d) return null;
-                        return (
-                            <div key={pc.key} className="flex items-center gap-3">
-                                <span className="text-base">{pc.emoji}</span>
-                                <span className="text-xs text-gray-400 flex-1">{pc.label}</span>
-                                <span className="text-[10px] text-gray-600">{fmt(d.impressions)} impr.</span>
-                                <span className="text-xs font-bold text-emerald-400 min-w-[80px] text-right">{fmtUSD(d.emv)}</span>
-                            </div>
-                        );
-                    })}
+                    <div className="space-y-2">
+                        {(calcMethod === 1 ? enabledPlatforms.map(pc => ({ key: pc.key, label: pc.label, emoji: pc.emoji, d: result.byPlatform[pc.key] })) : Object.entries(result.byPlatform).map(([key, d]) => { const pc = cpmConfig.find(c => c.key === key); return { key, label: pc?.label ?? key, emoji: pc?.emoji ?? '🌐', d }; })).map(({ key, label, emoji, d }) => {
+                            const pct = result.total > 0 && d ? (d.emv / result.total) * 100 : 0;
+                            return (
+                                <div key={key} className="bg-gray-800/50 rounded-xl px-3 py-2.5">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="text-base">{emoji}</span>
+                                        <span className="text-xs text-gray-300 flex-1 font-medium">{label}</span>
+                                        {d && <span className="text-[10px] text-gray-500">{fmt(d.impressions)} impr.</span>}
+                                        <span className={`text-xs font-black min-w-[72px] text-right ${isMIV ? 'text-blue-400' : 'text-emerald-400'}`}>{d ? fmtUSD(d.emv) : '$0.00'}</span>
+                                    </div>
+                                    {d && pct > 0 && (
+                                        <div className="h-1 bg-gray-700/60 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full ${isMIV ? 'bg-blue-500' : 'bg-emerald-500'}`}
+                                                style={{ width: `${Math.min(pct, 100)}%` }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
             {/* ── Post List ─────────────────────────────────────────────────── */}
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+            <div className="bg-gray-900/80 rounded-2xl border border-gray-800/80 p-5">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">📋 รายการโพสต์ ({fmt(rows.length)})</h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">📋 รายการโพสต์</h3>
+                        <span className="text-[9px] bg-gray-700/60 text-gray-400 px-2 py-0.5 rounded-full">{fmt(rows.length)} รายการ</span>
+                    </div>
                 </div>
 
                 {/* ── View Mode: All / Namtan / Media ────────────────────── */}
-                <div className="flex gap-1 mb-3 bg-gray-800/60 rounded-xl p-1">
+                <div className="flex gap-1 mb-3 p-1 bg-gray-800/40 rounded-xl border border-gray-700/40">
                     {([
                         { id: 'all' as ViewMode, label: 'ทั้งหมด', count: platformFiltered.length },
-                        { id: 'namtan' as ViewMode, label: '👤 ของ Namtan', count: namtanCount },
-                        { id: 'media' as ViewMode, label: '📰 สื่อ / Media', count: mediaCount },
+                        { id: 'namtan' as ViewMode, label: '👤 Namtan', count: namtanCount },
+                        { id: 'media' as ViewMode, label: '📰 สื่อ', count: mediaCount },
                     ]).map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setViewMode(tab.id)}
                             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${viewMode === tab.id
-                                ? 'bg-rose-600 text-white shadow'
-                                : 'text-gray-500 hover:text-gray-300'
+                                ? 'bg-rose-600 text-white shadow-sm'
+                                : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700/40'
                                 }`}
                         >
                             {tab.label}
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${viewMode === tab.id ? 'bg-white/20' : 'bg-gray-700 text-gray-500'
-                                }`}>{tab.count}</span>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${viewMode === tab.id ? 'bg-white/20' : 'bg-gray-700 text-gray-600'}`}>{tab.count}</span>
                         </button>
                     ))}
                 </div>
