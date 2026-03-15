@@ -686,6 +686,21 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
     const togglePlatform = (key: string) =>
         setExpandedPlatforms(prev => ({ ...prev, [key]: !prev[key] }));
 
+    const [mediaSearch, setMediaSearch] = useState('');
+
+    // Flat list: all (platform, outlet, count) sorted by count desc
+    const flatMediaList = mediaPlatformEntries.flatMap(([platform, outlets]) =>
+        Object.entries(outlets).map(([title, count]) => ({ platform, title, count }))
+    ).sort((a, b) => b.count - a.count);
+
+    const searchTerm = mediaSearch.toLowerCase().trim();
+    const filteredFlatList = searchTerm
+        ? flatMediaList.filter(item =>
+            item.title.toLowerCase().includes(searchTerm) ||
+            plPlain(item.platform).toLowerCase().includes(searchTerm)
+          )
+        : [];
+
     // ── Export helpers ────────────────────────────────────────────────────────
     const PLATFORM_LABEL_PLAIN: Record<string, string> = {
         instagram: 'Instagram', facebook: 'Facebook', x: 'X (Twitter)',
@@ -753,62 +768,103 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
 
             {/* ─ Block 2: Media outlets per platform ────────────────────────────── */}
             <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-amber-500/25 p-5 shadow-xl">
-                <div className="flex items-center justify-between mb-4">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-bold text-amber-300 uppercase tracking-widest flex items-center gap-2">
                         <span>📰</span> สื่อ (Media) แยกตาม Platform
                     </h3>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-gray-500">คลิก platform เพื่อดูรายชื่อสื่อ</span>
+                    <button
+                        onClick={() => exportMediaCSV(searchTerm ? undefined : undefined)}
+                        className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                        title="Export ข้อมูล Media ทั้งหมดเป็น CSV"
+                    >
+                        ⬇️ Export CSV
+                    </button>
+                </div>
+
+                {/* Search bar */}
+                <div className="relative mb-4">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+                    <input
+                        type="text"
+                        value={mediaSearch}
+                        onChange={e => setMediaSearch(e.target.value)}
+                        placeholder="ค้นหาสื่อ / outlet — รวมทุก platform..."
+                        className="w-full bg-gray-800/70 text-white text-xs rounded-xl pl-8 pr-10 py-2.5 outline-none border border-gray-700 focus:border-amber-500/60 transition-colors placeholder-gray-600"
+                    />
+                    {mediaSearch && (
                         <button
-                            onClick={() => exportMediaCSV()}
-                            className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all active:scale-95"
-                            title="Export ข้อมูล Media ทั้งหมดเป็น CSV"
-                        >
-                            ⬇️ Export CSV
-                        </button>
-                    </div>
+                            onClick={() => setMediaSearch('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors text-xs"
+                        >✕</button>
+                    )}
                 </div>
-                <div className="space-y-3">
-                    {mediaPlatformEntries.map(([platform, outlets]) => {
-                        const outletEntries = Object.entries(outlets).sort((a, b) => b[1] - a[1]);
-                        const totalPosts = outletEntries.reduce((s, [, n]) => s + n, 0);
-                        const isOpen = expandedPlatforms[platform];
-                        return (
-                            <div key={platform} className="bg-gray-800/50 rounded-xl border border-gray-700/50 overflow-hidden">
-                                {/* Platform header row */}
-                                <div className="flex items-center w-full">
-                                    <button
-                                        onClick={() => togglePlatform(platform)}
-                                        className="flex-1 flex items-center gap-3 px-4 py-3 hover:bg-gray-700/30 transition-colors text-left"
-                                    >
-                                        <span className="text-sm font-bold text-gray-200 flex-1">{pl(platform)}</span>
-                                        <span className="text-[10px] text-gray-400">{outletEntries.length} สื่อ</span>
-                                        <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">{totalPosts} โพสต์</span>
-                                        <span className="text-gray-500 text-xs ml-1">{isOpen ? '▲' : '▼'}</span>
-                                    </button>
-                                    <button
-                                        onClick={e => { e.stopPropagation(); exportMediaCSV(platform); }}
-                                        className="flex-shrink-0 mr-3 text-[10px] text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 px-2 py-1 rounded-lg transition-all"
-                                        title={`Export ${plPlain(platform)} เป็น CSV`}
-                                    >
-                                        ⬇️
-                                    </button>
+
+                {/* ── Flat search result view ── */}
+                {searchTerm ? (
+                    <div className="space-y-1">
+                        {filteredFlatList.length === 0 ? (
+                            <div className="text-center py-8 text-gray-600 text-xs">ไม่พบสื่อที่ตรงกับ "{mediaSearch}"</div>
+                        ) : (
+                            <>
+                                <div className="text-[10px] text-gray-500 mb-2">
+                                    พบ <span className="text-amber-300 font-bold">{filteredFlatList.length}</span> สื่อ จากทุก platform
                                 </div>
-                                {/* Outlet list (collapsible) */}
-                                {isOpen && (
-                                    <div className="border-t border-gray-700/50 px-4 py-3 space-y-1.5">
-                                        {outletEntries.map(([title, count]) => (
-                                            <div key={title} className="flex items-center gap-2 py-1 border-b border-gray-800/60 last:border-0">
-                                                <span className="flex-1 text-[11px] text-gray-300 leading-tight">{title}</span>
-                                                <span className="text-[10px] font-bold text-amber-400 flex-shrink-0">{count} โพสต์</span>
-                                            </div>
-                                        ))}
+                                {filteredFlatList.map((item, i) => (
+                                    <div key={`${item.platform}-${item.title}-${i}`}
+                                        className="flex items-center gap-3 px-3 py-2 bg-gray-800/50 rounded-xl border border-gray-700/40 hover:border-amber-500/20 transition-colors">
+                                        <span className="text-[10px] bg-gray-700/60 text-gray-400 px-2 py-0.5 rounded-full flex-shrink-0">{pl(item.platform)}</span>
+                                        <span className="flex-1 text-[11px] text-gray-200 leading-tight">{item.title}</span>
+                                        <span className="text-[10px] font-bold text-amber-400 flex-shrink-0">{item.count} โพสต์</span>
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
+                                ))}
+                            </>
+                        )}
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {mediaPlatformEntries.map(([platform, outlets]) => {
+                            const outletEntries = Object.entries(outlets).sort((a, b) => b[1] - a[1]);
+                            const totalPosts = outletEntries.reduce((s, [, n]) => s + n, 0);
+                            const isOpen = expandedPlatforms[platform];
+                            return (
+                                <div key={platform} className="bg-gray-800/50 rounded-xl border border-gray-700/50 overflow-hidden">
+                                    {/* Platform header row */}
+                                    <div className="flex items-center w-full">
+                                        <button
+                                            onClick={() => togglePlatform(platform)}
+                                            className="flex-1 flex items-center gap-3 px-4 py-3 hover:bg-gray-700/30 transition-colors text-left"
+                                        >
+                                            <span className="text-sm font-bold text-gray-200 flex-1">{pl(platform)}</span>
+                                            <span className="text-[10px] text-gray-400">{outletEntries.length} สื่อ</span>
+                                            <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">{totalPosts} โพสต์</span>
+                                            <span className="text-gray-500 text-xs ml-1">{isOpen ? '▲' : '▼'}</span>
+                                        </button>
+                                        <button
+                                            onClick={e => { e.stopPropagation(); exportMediaCSV(platform); }}
+                                            className="flex-shrink-0 mr-3 text-[10px] text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 px-2 py-1 rounded-lg transition-all"
+                                            title={`Export ${plPlain(platform)} เป็น CSV`}
+                                        >
+                                            ⬇️
+                                        </button>
+                                    </div>
+                                    {/* Outlet list (collapsible) */}
+                                    {isOpen && (
+                                        <div className="border-t border-gray-700/50 px-4 py-3 space-y-1.5">
+                                            {outletEntries.map(([title, count]) => (
+                                                <div key={title} className="flex items-center gap-2 py-1 border-b border-gray-800/60 last:border-0">
+                                                    <span className="flex-1 text-[11px] text-gray-300 leading-tight">{title}</span>
+                                                    <span className="text-[10px] font-bold text-amber-400 flex-shrink-0">{count} โพสต์</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
                 <div className="mt-4 pt-3 border-t border-gray-800 flex items-center justify-between">
                     <span className="text-[11px] text-gray-400 font-bold">รวม Media ทั้งหมด</span>
                     <span className="text-2xl font-black text-amber-400">{mediaTasks.length} โพสต์</span>
