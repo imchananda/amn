@@ -724,7 +724,7 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
         : outletList;
 
     const exportMediaCSV = (targetPlatform?: string) => {
-        const rows: string[][] = [['Platform', 'Media / Outlet', 'Posts']];
+        const rows: string[][] = [['Platform', 'Media', 'Posts']];
         const entries = targetPlatform
             ? mediaPlatformEntries.filter(([p]) => p === targetPlatform)
             : mediaPlatformEntries;
@@ -838,13 +838,32 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
                             <button
                                 onClick={() => {
                                     const list = filteredOutletList;
-                                    const rows: string[][] = [['Media / Outlet', 'Platforms', 'Posts (per platform)', 'Total Posts']];
+                                    // 1. Get all unique platforms that exist in the filtered list
+                                    const allUniquePlatforms = Array.from(
+                                        new Set(list.flatMap(item => item.platforms.map(p => p.platform)))
+                                    );
+                                    
+                                    // 2. Define headers: Media -> [Platform 1] -> [Platform 2] -> ... -> Total Posts
+                                    // Map 'x' to 'X' for the header, otherwise use plPlain
+                                    const getHeaderName = (key: string) => key === 'x' ? 'X' : plPlain(key);
+                                    const platformHeaders = allUniquePlatforms.map(getHeaderName);
+                                    
+                                    const rows: string[][] = [['Media', ...platformHeaders, 'Total Posts']];
+                                    
+                                    // 3. Fill data rows
                                     list.forEach(item => {
-                                        const platformStr = item.platforms.map(p => plPlain(p.platform)).join(', ');
-                                        const perPlatform = item.platforms.map(p => `${plPlain(p.platform)}:${p.count}`).join(' | ');
-                                        rows.push([item.title, platformStr, perPlatform, String(item.total)]);
+                                        // Create a map of this outlet's posts per platform
+                                        const countsMap = item.platforms.reduce((acc, p) => {
+                                            acc[p.platform] = p.count;
+                                            return acc;
+                                        }, {} as Record<string, number>);
+                                        
+                                        // Build the row: [Title, Count1, Count2, ..., Total]
+                                        const platformData = allUniquePlatforms.map(pKey => String(countsMap[pKey] || 0));
+                                        rows.push([item.title, ...platformData, String(item.total)]);
                                     });
-                                    const csv = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}`).join(',')).join('\r\n');
+                                    
+                                    const csv = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\r\n');
                                     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
                                     const url = URL.createObjectURL(blob);
                                     const a = document.createElement('a');
@@ -854,6 +873,7 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
                                     URL.revokeObjectURL(url);
                                 }}
                                 className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all active:scale-95"
+
                             >
                                 ⬇️ Export CSV
                             </button>
