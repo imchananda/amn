@@ -686,6 +686,40 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
     const togglePlatform = (key: string) =>
         setExpandedPlatforms(prev => ({ ...prev, [key]: !prev[key] }));
 
+    // ── Export helpers ────────────────────────────────────────────────────────
+    const PLATFORM_LABEL_PLAIN: Record<string, string> = {
+        instagram: 'Instagram', facebook: 'Facebook', x: 'X (Twitter)',
+        tiktok: 'TikTok', youtube: 'YouTube', threads: 'Threads',
+        weibo: 'Weibo', red: 'RED (小红书)',
+    };
+    const plPlain = (key: string) => PLATFORM_LABEL_PLAIN[key] || key;
+
+    const exportMediaCSV = (targetPlatform?: string) => {
+        const rows: string[][] = [['Platform', 'Media / Outlet', 'Posts']];
+        const entries = targetPlatform
+            ? mediaPlatformEntries.filter(([p]) => p === targetPlatform)
+            : mediaPlatformEntries;
+        entries.forEach(([platform, outlets]) => {
+            Object.entries(outlets)
+                .sort((a, b) => b[1] - a[1])
+                .forEach(([title, count]) => {
+                    rows.push([plPlain(platform), title, String(count)]);
+                });
+        });
+        const csv = rows
+            .map(r => r.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+            .join('\r\n');
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const suffix = targetPlatform ? `_${plPlain(targetPlatform)}` : '_all';
+        a.href = url;
+        a.download = `media_by_platform${suffix}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="space-y-4">
             {/* Section header */}
@@ -719,10 +753,21 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
 
             {/* ─ Block 2: Media outlets per platform ────────────────────────────── */}
             <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-amber-500/25 p-5 shadow-xl">
-                <h3 className="text-xs font-bold text-amber-300 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span>📰</span> สื่อ (Media) แยกตาม Platform
-                    <span className="ml-auto text-[10px] text-gray-500 normal-case font-normal tracking-normal">คลิก platform เพื่อดูรายชื่อสื่อ</span>
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-bold text-amber-300 uppercase tracking-widest flex items-center gap-2">
+                        <span>📰</span> สื่อ (Media) แยกตาม Platform
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-500">คลิก platform เพื่อดูรายชื่อสื่อ</span>
+                        <button
+                            onClick={() => exportMediaCSV()}
+                            className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                            title="Export ข้อมูล Media ทั้งหมดเป็น CSV"
+                        >
+                            ⬇️ Export CSV
+                        </button>
+                    </div>
+                </div>
                 <div className="space-y-3">
                     {mediaPlatformEntries.map(([platform, outlets]) => {
                         const outletEntries = Object.entries(outlets).sort((a, b) => b[1] - a[1]);
@@ -731,15 +776,24 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
                         return (
                             <div key={platform} className="bg-gray-800/50 rounded-xl border border-gray-700/50 overflow-hidden">
                                 {/* Platform header row */}
-                                <button
-                                    onClick={() => togglePlatform(platform)}
-                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-700/30 transition-colors text-left"
-                                >
-                                    <span className="text-sm font-bold text-gray-200 flex-1">{pl(platform)}</span>
-                                    <span className="text-[10px] text-gray-400">{outletEntries.length} สื่อ</span>
-                                    <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">{totalPosts} โพสต์</span>
-                                    <span className="text-gray-500 text-xs ml-1">{isOpen ? '▲' : '▼'}</span>
-                                </button>
+                                <div className="flex items-center w-full">
+                                    <button
+                                        onClick={() => togglePlatform(platform)}
+                                        className="flex-1 flex items-center gap-3 px-4 py-3 hover:bg-gray-700/30 transition-colors text-left"
+                                    >
+                                        <span className="text-sm font-bold text-gray-200 flex-1">{pl(platform)}</span>
+                                        <span className="text-[10px] text-gray-400">{outletEntries.length} สื่อ</span>
+                                        <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">{totalPosts} โพสต์</span>
+                                        <span className="text-gray-500 text-xs ml-1">{isOpen ? '▲' : '▼'}</span>
+                                    </button>
+                                    <button
+                                        onClick={e => { e.stopPropagation(); exportMediaCSV(platform); }}
+                                        className="flex-shrink-0 mr-3 text-[10px] text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 px-2 py-1 rounded-lg transition-all"
+                                        title={`Export ${plPlain(platform)} เป็น CSV`}
+                                    >
+                                        ⬇️
+                                    </button>
+                                </div>
                                 {/* Outlet list (collapsible) */}
                                 {isOpen && (
                                     <div className="border-t border-gray-700/50 px-4 py-3 space-y-1.5">
@@ -865,7 +919,7 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
     const [igSumViewMode, setIgSumViewMode] = useState<ViewMode>('all');
 
     // ── EMV Calculation Method ──────────────────────────────────────────
-    const [calcMethod, setCalcMethod] = useState<1 | 2 | 3 | 4>(1);
+    const [calcMethod, setCalcMethod] = useState<1 | 2 | 3 | 4 | 5>(1);
 
     // Method 2 (was 3): per-platform per-metric rates
     const [m3Mults, setM3Mults] = useState<Record<string, Record<string, number>>>({
@@ -882,6 +936,14 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
     // Method 4: custom formula (user-defined)
     const [m4Formula, setM4Formula] = useState('likes * 0.01 + comments * 0.10 + shares * 0.5 + views * 0.03');
     const [m4FormulaError, setM4FormulaError] = useState('');
+
+    // Method 5: Impressions-based (account size tier + pumping detection)
+    const [m5Followers, setM5Followers] = useState(2828997);        // Namtan
+    const [m5MediaFollowers, setM5MediaFollowers] = useState(50000); // Media outlets
+    const getTierLabel = (f: number) => f < 10000 ? 'Nano' : f < 100000 ? 'Micro' : f < 1000000 ? 'Macro' : 'Mega';
+    const getDivisor = (f: number) => f < 10000 ? 0.06 : f < 100000 ? 0.04 : f < 1000000 ? 0.02 : 0.008;
+    const m5Tier = getTierLabel(m5Followers); const m5Divisor = getDivisor(m5Followers);
+    const m5MediaTier = getTierLabel(m5MediaFollowers); const m5MediaDivisor = getDivisor(m5MediaFollowers);
 
     const enabledField: keyof PlatformCPM = isMIV ? 'enabledMIV' : 'enabled';
     const enabledPlatforms = cpmConfig.filter(c => c[enabledField]);
@@ -981,6 +1043,29 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
                     const fn = new Function('likes', 'comments', 'shares', 'reposts', 'views', 'saves', 'totalEng', `return (${m4Formula})`);
                     emv = Number(fn(likes, comments, shares, reposts, views, saves, totalEng)) || 0;
                 } catch { return; }
+            } else if (calcMethod === 5) {
+                const pc = cpmConfig.find(c => c.key === row.platform);
+                if (!pc || !pc[enabledField]) return;
+                // pick divisor based on whether it's Namtan or a media account
+                const divisor = row.isMedia ? m5MediaDivisor : m5Divisor;
+                let impressions5: number;
+                if (views === 0) {
+                    // Formula A — no views
+                    impressions5 = (likes + comments + reposts + shares) / divisor;
+                } else {
+                    // Formula B — has views
+                    // Step 1: detect share pumping (check only, not used in impressions formula)
+                    const trueShare = views * 0.02;
+                    const sharesPumped = shares > trueShare * 3;
+                    // Step 2: true views depends on share pump
+                    const trueViews = sharesPumped
+                        ? (likes + comments + reposts) / divisor           // exclude pumped shares
+                        : (likes + comments + reposts + shares) / divisor; // include normal shares
+                    const viewsPumped = trueViews > 0 && (views / trueViews) > 2;
+                    // Step 3: always views-based
+                    impressions5 = (viewsPumped ? trueViews : views) * 1.1;
+                }
+                emv = (impressions5 * pc.cpm) / 1000;
             }
 
             total += emv;
@@ -990,7 +1075,7 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
             byPlatform[row.platform].posts += 1;
         });
         return { total, byPlatform };
-    }, [filteredRows, cpmConfig, enabledField, calcMethod, m3Mults, m4Mults, m4Formula]);
+    }, [filteredRows, cpmConfig, enabledField, calcMethod, m3Mults, m4Mults, m4Formula, m5Divisor, m5MediaDivisor]);
 
     return (
         <div className="space-y-5">
@@ -1013,12 +1098,13 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
             {/* ── Method Selector ─────────────────────────────────── */}
             <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
                 <div className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3">⚗️ เลือกวิธีคำนวณ</div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-0">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-0">
                     {([
                         { id: 1 as const, label: 'Method 1', desc: '(Eng × CPM) / 1000' },
                         { id: 2 as const, label: 'Method 2', desc: 'Per-Metric Rate' },
                         { id: 3 as const, label: 'Method 3', desc: 'IG Estimated' },
                         { id: 4 as const, label: 'Method 4', desc: 'Custom Formula ✍️' },
+                        { id: 5 as const, label: 'Method 5', desc: 'Impressions Est. 📡' },
                     ]).map(m => (
                         <button key={m.id} onClick={() => setCalcMethod(m.id)}
                             className={`p-3 rounded-xl border text-left transition-all ${calcMethod === m.id
@@ -1076,6 +1162,83 @@ function EMVSection({ title, subtitle, note, rows, cpmConfig, updateCPM, updateR
                                         className="text-right bg-gray-700/80 text-white text-sm font-bold rounded-lg px-2 py-1 outline-none border border-gray-600 focus:border-rose-500 transition-colors" />
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Method 5: Impressions Estimation */}
+                {calcMethod === 5 && (
+                    <div className="mt-3 pt-3 border-t border-gray-800">
+                        <div className="text-[10px] text-gray-500 mb-3">
+                            คำนวณ <span className="text-cyan-300 font-bold">Impressions</span> ก่อน แล้วค่อยคิด EMV = (Impressions × CPM) / 1000
+                        </div>
+
+                        {/* Follower inputs: Namtan + Media side by side */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                            {/* Namtan */}
+                            <div className="flex items-center gap-3 bg-violet-900/20 rounded-xl p-3 border border-violet-700/40">
+                                <div className="flex-1">
+                                    <label className="text-[9px] text-violet-400 uppercase tracking-wider block mb-1">👤 Namtan — Followers</label>
+                                    <input
+                                        type="number" min="0" step="1"
+                                        value={m5Followers}
+                                        onChange={e => setM5Followers(parseInt(e.target.value) || 0)}
+                                        className="w-full bg-gray-700/80 text-white text-sm font-bold rounded-lg px-3 py-1.5 outline-none border border-violet-700/50 focus:border-violet-400 transition-colors"
+                                    />
+                                </div>
+                                <div className="text-center flex-shrink-0">
+                                    <div className={`text-sm font-black px-2.5 py-1 rounded-lg border ${m5Tier === 'Mega' ? 'text-amber-300 bg-amber-900/30 border-amber-700/50' : 'text-violet-300 bg-violet-900/30 border-violet-700/50'
+                                        }`}>{m5Tier}</div>
+                                    <div className="text-[9px] text-gray-600 mt-0.5">÷ {m5Divisor}</div>
+                                </div>
+                            </div>
+                            {/* Media */}
+                            <div className="flex items-center gap-3 bg-amber-900/20 rounded-xl p-3 border border-amber-700/40">
+                                <div className="flex-1">
+                                    <label className="text-[9px] text-amber-400 uppercase tracking-wider block mb-1">📰 สื่อ (Media) — Followers avg.</label>
+                                    <input
+                                        type="number" min="0" step="1"
+                                        value={m5MediaFollowers}
+                                        onChange={e => setM5MediaFollowers(parseInt(e.target.value) || 0)}
+                                        className="w-full bg-gray-700/80 text-white text-sm font-bold rounded-lg px-3 py-1.5 outline-none border border-amber-700/50 focus:border-amber-400 transition-colors"
+                                    />
+                                </div>
+                                <div className="text-center flex-shrink-0">
+                                    <div className={`text-sm font-black px-2.5 py-1 rounded-lg border ${m5MediaTier === 'Micro' ? 'text-blue-300 bg-blue-900/30 border-blue-700/50' : 'text-amber-300 bg-amber-900/30 border-amber-700/50'
+                                        }`}>{m5MediaTier}</div>
+                                    <div className="text-[9px] text-gray-600 mt-0.5">÷ {m5MediaDivisor}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Algorithm explanation */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px]">
+                            <div className="bg-gray-800/30 rounded-xl p-3 border border-gray-700/40">
+                                <div className="font-bold text-cyan-400 mb-1.5">📭 Formula A — ไม่มี Views</div>
+                                <code className="text-gray-300 font-mono">(Likes + Comments + Reposts + Shares) ÷ {m5Divisor}</code>
+                            </div>
+                            <div className="bg-gray-800/30 rounded-xl p-3 border border-gray-700/40">
+                                <div className="font-bold text-cyan-400 mb-1.5">📺 Formula B — มี Views</div>
+                                <div className="text-gray-400 space-y-1.5">
+                                    <div>
+                                        <span className="text-yellow-400">Step 1</span> True Share = Views × 0.02
+                                        <div className="ml-3 mt-0.5 text-gray-500">• Share แสดง {'>'} True Share × 3 → <span className="text-red-400">ปั่น → ตัด Share ออก</span></div>
+                                        <div className="ml-3 text-gray-500">• Share แสดง &lt;= × 3 → <span className="text-emerald-400">ปกติ → ใช้ได้</span></div>
+                                    </div>
+                                    <div>
+                                        <span className="text-yellow-400">Step 2</span> True Views — ใช้ divisor ตาม account type
+                                        <div className="ml-3 mt-0.5 text-gray-500">• Share ปั่น: (Like+Comment+Repost) ÷ divisor</div>
+                                        <div className="ml-3 text-gray-500">• Share ปกติ: (Like+Comment+Repost+Share) ÷ divisor</div>
+                                        <div className="ml-3 mt-0.5 text-violet-400">Namtan ÷ {m5Divisor} · สื่อ ÷ {m5MediaDivisor}</div>
+                                        <div className="ml-3 mt-0.5 text-gray-500">• Views แสดง {'>'} True Views × 2 → <span className="text-red-400">Views ปั่น</span></div>
+                                    </div>
+                                    <div>
+                                        <span className="text-yellow-400">Step 3</span> Impressions (ใช้ Views เป็นหลัก)
+                                        <div className="ml-3 mt-0.5 text-gray-500">• Views ไม่ปั่น: Views แสดง × 1.1</div>
+                                        <div className="ml-3 text-gray-500">• Views ปั่น: True Views × 1.1</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
