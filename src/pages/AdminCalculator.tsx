@@ -693,8 +693,10 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
         weibo: 'Weibo', red: 'RED (小红书)',
     };
     const plPlain = (key: string) => PLATFORM_LABEL_PLAIN[key] || key;
-
     const [mediaSearch, setMediaSearch] = useState('');
+    const [mediaSortBy, setMediaSortBy] = useState<'count' | 'name'>('count');
+    const [mediaSortOrder, setMediaSortOrder] = useState<'desc' | 'asc'>('desc');
+    const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
 
     // Outlet-first list: group by title across all platforms
     // e.g. { title: "Vogue Thailand", platforms: [{platform:"instagram",count:3},{platform:"x",count:2}], total: 5 }
@@ -711,17 +713,27 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
                 title,
                 platforms: platforms.sort((a, b) => b.count - a.count),
                 total: platforms.reduce((s, p) => s + p.count, 0),
-            }))
-            .sort((a, b) => b.total - a.total);
+            }));
     })();
 
     const searchTerm = mediaSearch.toLowerCase().trim();
-    const filteredOutletList = searchTerm
+    let filteredOutletList = searchTerm
         ? outletList.filter(item =>
             item.title.toLowerCase().includes(searchTerm) ||
             item.platforms.some(p => plPlain(p.platform).toLowerCase().includes(searchTerm))
           )
         : outletList;
+
+    // Apply sorting
+    filteredOutletList = [...filteredOutletList].sort((a, b) => {
+        if (mediaSortBy === 'count') {
+            return mediaSortOrder === 'desc' ? b.total - a.total : a.total - b.total;
+        } else {
+            return mediaSortOrder === 'desc' 
+                ? b.title.localeCompare(a.title) 
+                : a.title.localeCompare(b.title);
+        }
+    });
 
     const exportMediaCSV = (targetPlatform?: string) => {
         const rows: string[][] = [['Platform', 'Media', 'Posts']];
@@ -827,83 +839,161 @@ function DataQualityPanel({ allTasks }: { allTasks: SheetTask[] }) {
                 {/* ── Flat / Combined view ── */}
                 {mediaViewMode === 'flat' ? (
                     <div className="space-y-1">
-                        {/* Export + count bar */}
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-gray-500">
-                                {searchTerm
-                                    ? <>พบ <span className="text-amber-300 font-bold">{filteredOutletList.length}</span> สื่อ จาก {outletList.length} ทั้งหมด</>
-                                    : <><span className="text-amber-300 font-bold">{outletList.length}</span> สื่อ · รวมทุก Platform เรียงตามโพสต์</>
-                                }
-                            </span>
-                            <button
-                                onClick={() => {
-                                    const list = filteredOutletList;
-                                    // 1. Get all unique platforms that exist in the filtered list
-                                    const allUniquePlatforms = Array.from(
-                                        new Set(list.flatMap(item => item.platforms.map(p => p.platform)))
-                                    );
-                                    
-                                    // 2. Define headers: Media -> [Platform 1] -> [Platform 2] -> ... -> Total Posts
-                                    // Map 'x' to 'X' for the header, otherwise use plPlain
-                                    const getHeaderName = (key: string) => key === 'x' ? 'X' : plPlain(key);
-                                    const platformHeaders = allUniquePlatforms.map(getHeaderName);
-                                    
-                                    const rows: string[][] = [['Media', ...platformHeaders, 'Total Posts']];
-                                    
-                                    // 3. Fill data rows
-                                    list.forEach(item => {
-                                        // Create a map of this outlet's posts per platform
-                                        const countsMap = item.platforms.reduce((acc, p) => {
-                                            acc[p.platform] = p.count;
-                                            return acc;
-                                        }, {} as Record<string, number>);
-                                        
-                                        // Build the row: [Title, Count1, Count2, ..., Total]
-                                        const platformData = allUniquePlatforms.map(pKey => String(countsMap[pKey] || 0));
-                                        rows.push([item.title, ...platformData, String(item.total)]);
-                                    });
-                                    
-                                    const csv = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\r\n');
-                                    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    a.download = `media_combined${searchTerm ? '_filtered' : '_all'}.csv`;
-                                    a.click();
-                                    URL.revokeObjectURL(url);
-                                }}
-                                className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                        {selectedOutlet ? (
+                            <div className="space-y-3">
+                                {/* Drill-down Header */}
+                                <div className="flex items-center gap-3 mb-2">
+                                    <button 
+                                        onClick={() => setSelectedOutlet(null)}
+                                        className="bg-gray-800/80 hover:bg-gray-700/80 text-gray-300 text-[11px] font-bold px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 border border-gray-700/50 hover:border-gray-500"
+                                    >
+                                        ⬅️ กลับ
+                                    </button>
+                                    <h4 className="text-[12px] font-bold text-amber-300 flex-1 truncate">
+                                        โพสต์ของ {selectedOutlet}
+                                    </h4>
+                                </div>
+                                {/* Posts list */}
+                                <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
+                                    {mediaTasks
+                                        .filter(t => (t.title || t.url).trim() === selectedOutlet)
+                                        .sort((a, b) => {
+                                            const totalA = a.likes + a.comments + a.shares + a.views;
+                                            const totalB = b.likes + b.comments + b.shares + b.views;
+                                            return totalB - totalA;
+                                        })
+                                        .map(t => (
+                                            <a key={t.id} href={t.url} target="_blank" rel="noopener noreferrer"
+                                                className="block bg-gray-800/40 p-3 rounded-xl border border-gray-700/40 hover:border-amber-500/40 transition-colors group">
+                                                <div className="flex items-start gap-3">
+                                                    <span className="text-sm mt-0.5" title={plPlain(t.platform)}>{pl(t.platform).split(' ')[0]}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-[11px] text-amber-200/80 group-hover:text-amber-300 truncate mb-1.5 flex items-center gap-1.5">
+                                                            {t.url} <span>↗</span>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-3 text-[10px] text-gray-500">
+                                                            {t.likes > 0 && <span className="flex items-center gap-1">👍 <span className="text-gray-300">{t.likes}</span></span>}
+                                                            {t.comments > 0 && <span className="flex items-center gap-1">💬 <span className="text-gray-300">{t.comments}</span></span>}
+                                                            {t.shares > 0 && <span className="flex items-center gap-1">🔄 <span className="text-gray-300">{t.shares}</span></span>}
+                                                            {t.reposts > 0 && <span className="flex items-center gap-1">🔁 <span className="text-gray-300">{t.reposts}</span></span>}
+                                                            {t.views > 0 && <span className="flex items-center gap-1">👁️ <span className="text-gray-300">{t.views}</span></span>}
+                                                            {t.followerFlag === 0 && <span className="text-red-400 font-bold ml-auto px-1.5 py-0.5 bg-red-500/10 rounded-md">🚩 No Followers</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Controls: Export + Sort + Count bar */}
+                                <div className="flex flex-col gap-2 mb-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-500">
+                                            {searchTerm
+                                                ? <>พบ <span className="text-amber-300 font-bold">{filteredOutletList.length}</span> สื่อ จาก {outletList.length} ทั้งหมด</>
+                                                : <><span className="text-amber-300 font-bold">{outletList.length}</span> สื่อ · รวมทุก Platform</>
+                                            }
+                                        </span>
+                                        <button
+                                            onClick={() => {
+                                                const list = filteredOutletList;
+                                                // 1. Get all unique platforms that exist in the filtered list
+                                                const allUniquePlatforms = Array.from(
+                                                    new Set(list.flatMap(item => item.platforms.map(p => p.platform)))
+                                                );
+                                                
+                                                // 2. Define headers: Media -> [Platform 1] -> [Platform 2] -> ... -> Total Posts
+                                                // Map 'x' to 'X' for the header, otherwise use plPlain
+                                                const getHeaderName = (key: string) => key === 'x' ? 'X' : plPlain(key);
+                                                const platformHeaders = allUniquePlatforms.map(getHeaderName);
+                                                
+                                                const rows: string[][] = [['Media', ...platformHeaders, 'Total Posts']];
+                                                
+                                                // 3. Fill data rows
+                                                list.forEach(item => {
+                                                    // Create a map of this outlet's posts per platform
+                                                    const countsMap = item.platforms.reduce((acc, p) => {
+                                                        acc[p.platform] = p.count;
+                                                        return acc;
+                                                    }, {} as Record<string, number>);
+                                                    
+                                                    // Build the row: [Title, Count1, Count2, ..., Total]
+                                                    const platformData = allUniquePlatforms.map(pKey => String(countsMap[pKey] || 0));
+                                                    rows.push([item.title, ...platformData, String(item.total)]);
+                                                });
+                                                
+                                                const csv = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\r\n');
+                                                const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                                                const url = URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = `media_combined${searchTerm ? '_filtered' : '_all'}.csv`;
+                                                a.click();
+                                                URL.revokeObjectURL(url);
+                                            }}
+                                            className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all active:scale-95"
 
-                            >
-                                ⬇️ Export CSV
-                            </button>
-                        </div>
-                        {/* Outlet list */}
-                        <div className="space-y-1 max-h-[480px] overflow-y-auto pr-1">
-                            {filteredOutletList.length === 0 ? (
-                                <div className="text-center py-8 text-gray-600 text-xs">ไม่พบสื่อที่ตรงกับ "{mediaSearch}"</div>
-                            ) : (
-                                filteredOutletList.map((item) => (
-                                    <div key={item.title}
-                                        className="flex items-start gap-3 px-3 py-2.5 bg-gray-800/50 rounded-xl border border-gray-700/40 hover:border-amber-500/20 transition-colors">
-                                        {/* Outlet name */}
-                                        <span className="flex-1 text-[11px] text-gray-200 leading-snug font-medium min-w-0">{item.title}</span>
-                                        {/* Platform badges */}
-                                        <div className="flex flex-wrap gap-1 justify-end flex-shrink-0">
-                                            {item.platforms.map(p => (
-                                                <span key={p.platform}
-                                                    className="text-[9px] bg-gray-700/70 text-gray-300 border border-gray-600/50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                                    {pl(p.platform)} <span className="text-amber-400 font-bold">{p.count}</span>
-                                                </span>
-                                            ))}
-                                            <span className="text-[10px] font-black text-amber-400 px-1.5 py-0.5 bg-amber-500/10 rounded-full border border-amber-500/25 whitespace-nowrap">
-                                                รวม {item.total}
-                                            </span>
+                                        >
+                                            ⬇️ Export CSV
+                                        </button>
+                                    </div>
+                                    {/* Sort controls */}
+                                    <div className="flex items-center gap-1.5 bg-gray-800/40 p-1.5 rounded-xl border border-gray-700/50">
+                                        <span className="text-[10px] text-gray-500 ml-1">เรียงตาม:</span>
+                                        <div className="flex gap-1 ml-auto">
+                                            <button 
+                                                onClick={() => { setMediaSortBy('count'); setMediaSortOrder('desc'); }}
+                                                className={`px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${mediaSortBy === 'count' && mediaSortOrder === 'desc' ? 'bg-amber-500/20 text-amber-300' : 'text-gray-500 hover:text-gray-300'}`}
+                                            >โพสต์ มาก-น้อย</button>
+                                            <button 
+                                                onClick={() => { setMediaSortBy('count'); setMediaSortOrder('asc'); }}
+                                                className={`px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${mediaSortBy === 'count' && mediaSortOrder === 'asc' ? 'bg-amber-500/20 text-amber-300' : 'text-gray-500 hover:text-gray-300'}`}
+                                            >โพสต์ น้อย-มาก</button>
+                                            <div className="w-[1px] bg-gray-700/50 mx-0.5"></div>
+                                            <button 
+                                                onClick={() => { setMediaSortBy('name'); setMediaSortOrder('asc'); }}
+                                                className={`px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${mediaSortBy === 'name' && mediaSortOrder === 'asc' ? 'bg-amber-500/20 text-amber-300' : 'text-gray-500 hover:text-gray-300'}`}
+                                            >ก-ฮ</button>
+                                            <button 
+                                                onClick={() => { setMediaSortBy('name'); setMediaSortOrder('desc'); }}
+                                                className={`px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${mediaSortBy === 'name' && mediaSortOrder === 'desc' ? 'bg-amber-500/20 text-amber-300' : 'text-gray-500 hover:text-gray-300'}`}
+                                            >ฮ-ก</button>
                                         </div>
                                     </div>
-                                ))
-                            )}
-                        </div>
+                                </div>
+                                {/* Outlet list */}
+                                <div className="space-y-1 max-h-[440px] overflow-y-auto pr-1">
+                                    {filteredOutletList.length === 0 ? (
+                                        <div className="text-center py-8 text-gray-600 text-xs">ไม่พบสื่อที่ตรงกับ "{mediaSearch}"</div>
+                                    ) : (
+                                        filteredOutletList.map((item) => (
+                                            <div 
+                                                key={item.title}
+                                                onClick={() => setSelectedOutlet(item.title)}
+                                                className="flex items-start gap-3 px-3 py-2.5 bg-gray-800/50 rounded-xl border border-gray-700/40 hover:border-amber-500/40 hover:bg-gray-750 cursor-pointer transition-all group"
+                                            >
+                                                {/* Outlet name */}
+                                                <span className="flex-1 text-[11px] text-gray-200 group-hover:text-amber-100 leading-snug font-medium min-w-0 transition-colors">{item.title}</span>
+                                                {/* Platform badges */}
+                                                <div className="flex flex-wrap gap-1 justify-end flex-shrink-0">
+                                                    {item.platforms.map(p => (
+                                                        <span key={p.platform}
+                                                            className="text-[9px] bg-gray-700/70 text-gray-300 border border-gray-600/50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                                            {pl(p.platform)} <span className="text-amber-400 font-bold">{p.count}</span>
+                                                        </span>
+                                                    ))}
+                                                    <span className="text-[10px] font-black text-amber-400 px-1.5 py-0.5 bg-amber-500/10 rounded-full border border-amber-500/25 whitespace-nowrap">
+                                                        รวม {item.total}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
 
                 ) : (
