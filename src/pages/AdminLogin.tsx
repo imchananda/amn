@@ -26,13 +26,13 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
         <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] bg-rose-900/10 rounded-full blur-[100px] mix-blend-screen opacity-50"></div>
       </div>
 
-      <div className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <div className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         <div className="text-center mb-8">
           {/* Custom Armani Icon Image */}
           <img 
             src="/nt-amn-2.png" 
             alt="Armani Login Logo" 
-            className="w-16 h-16 object-cover rounded-2xl mx-auto mb-5 shadow-lg shadow-red-900/50" 
+            className="w-24 h-auto object-contain mx-auto mb-6" 
           />
           <h1 className="text-2xl font-bold text-white mb-2 font-display">Namtan x Armani</h1>
         </div>
