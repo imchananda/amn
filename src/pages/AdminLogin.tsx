@@ -26,13 +26,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
         <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] bg-rose-900/10 rounded-full blur-[100px] mix-blend-screen opacity-50"></div>
       </div>
 
-      <div 
-        className="w-full max-w-md backdrop-blur-2xl rounded-3xl p-8 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700"
-        style={{
-          background: 'linear-gradient(to top, rgba(153, 27, 27, 0.7) 0%, rgba(190, 24, 93, 0.5) 35%, rgba(0, 0, 0, 0.6) 70%, rgba(0, 0, 0, 0) 100%)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-        }}
-      >
+      <div className="w-full max-w-md bg-gradient-to-br from-red-950/40 to-pink-900/20 backdrop-blur-2xl rounded-3xl p-8 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         <div className="text-center mb-8">
           {/* Custom Armani Icon Image */}
           <img 
