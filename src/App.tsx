@@ -690,8 +690,9 @@ function App() {
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     
-    // Header transition logic
-    setIsScrolled(scrollTop > 20);
+    // Header transition logic - Prevent duplicate state updates (reduces scroll lag)
+    const shouldBeScrolled = scrollTop > 20;
+    setIsScrolled(prev => prev !== shouldBeScrolled ? shouldBeScrolled : prev);
 
     // Infinite scroll load more
     if (scrollTimeoutRef.current) return;
