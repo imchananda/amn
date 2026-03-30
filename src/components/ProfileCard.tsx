@@ -1,4 +1,4 @@
-import { useLanguage } from '../i18n/LanguageContext';
+﻿import { useLanguage } from '../i18n/LanguageContext';
 
 // SVG Icons (same ones used in App.tsx)
 const XIcon = () => (
@@ -91,30 +91,30 @@ export function ProfileCard({ platformStatsMap, goals, onMinimize }: ProfileCard
     };
 
     return (
-        <div className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-4 sm:p-5 mx-0 mb-4 border border-prada-warm/30 shadow-2xl shadow-black/5 relative overflow-hidden group">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-4 sm:p-5 mx-0 mb-4 border border-agtic-warm/30 shadow-2xl shadow-black/5 relative overflow-hidden group">
             {/* Decorative glow */}
-            <div className="absolute top-0 right-0 -mr-10 -mt-10 w-28 h-28 bg-prada-warm/25 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute top-0 right-0 -mr-10 -mt-10 w-28 h-28 bg-agtic-warm/25 rounded-full blur-2xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col gap-4">
 
                 {/* ── Section Header ── */}
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="text-prada-gold font-serif text-base">✦</span>
-                        <h3 className="text-xs font-bold text-prada-charcoal uppercase tracking-[0.15em]">Platform Engagement</h3>
+                        <span className="text-agtic-gold font-serif text-base">✦</span>
+                        <h3 className="text-xs font-bold text-agtic-charcoal uppercase tracking-[0.15em]">Platform Engagement</h3>
                     </div>
                     {onMinimize && (
                         <div className="flex flex-col items-center gap-1">
                             <button
                                 onClick={onMinimize}
-                                className="w-7 h-7 rounded-lg bg-prada-warm/25 text-prada-charcoal border border-prada-warm/40 shadow-sm hover:bg-prada-warm/40 active:scale-95 flex items-center justify-center"
+                                className="w-7 h-7 rounded-lg bg-agtic-warm/25 text-agtic-charcoal border border-agtic-warm/40 shadow-sm hover:bg-agtic-warm/40 active:scale-95 flex items-center justify-center"
                                 title={t('minimize')}
                             >
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3 h-3">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                                 </svg>
                             </button>
-                            <span className="text-[6.5px] font-bold text-prada-charcoal/50 uppercase tracking-[0.1em] animate-pulse text-center leading-tight">
+                            <span className="text-[6.5px] font-bold text-agtic-charcoal/50 uppercase tracking-[0.1em] animate-pulse text-center leading-tight">
                                 {t('tapToHide')}
                             </span>
                         </div>
@@ -132,7 +132,7 @@ export function ProfileCard({ platformStatsMap, goals, onMinimize }: ProfileCard
                         return (
                             <div
                                 key={p.id}
-                                className="flex-shrink-0 w-[100px] bg-white rounded-2xl border border-prada-warm/30 shadow-sm overflow-hidden flex flex-col"
+                                className="flex-shrink-0 w-[100px] bg-white rounded-2xl border border-agtic-warm/30 shadow-sm overflow-hidden flex flex-col"
                             >
                                 {/* Platform header */}
                                 <div className={`bg-gradient-to-br ${p.gradient} flex items-center gap-1.5 px-2.5 py-2`}>
@@ -144,10 +144,10 @@ export function ProfileCard({ platformStatsMap, goals, onMinimize }: ProfileCard
                                 <div className="p-2 flex flex-col gap-1 flex-1">
                                     {p.metrics.map(key => (
                                         <div key={key} className="flex justify-between items-baseline gap-1">
-                                            <span className="text-[8.5px] text-prada-taupe/70 uppercase tracking-wider truncate">
+                                            <span className="text-[8.5px] text-agtic-taupe/70 uppercase tracking-wider truncate">
                                                 {METRIC_LABEL[key]()}
                                             </span>
-                                            <span className="text-[10px] font-bold text-prada-charcoal tabular-nums">
+                                            <span className="text-[10px] font-bold text-agtic-charcoal tabular-nums">
                                                 {stats ? fmt(stats[key] || 0) : '—'}
                                             </span>
                                         </div>
@@ -155,9 +155,9 @@ export function ProfileCard({ platformStatsMap, goals, onMinimize }: ProfileCard
                                 </div>
 
                                 {/* Total footer */}
-                                <div className="bg-prada-cream/60 px-2.5 py-1.5 border-t border-prada-warm/30 flex items-baseline justify-between">
-                                    <span className="text-[8px] text-prada-taupe/60 uppercase tracking-wider font-medium">Total</span>
-                                    <span className="text-[11px] font-bold text-prada-charcoal tabular-nums">{fmt(total)}</span>
+                                <div className="bg-agtic-cream/60 px-2.5 py-1.5 border-t border-agtic-warm/30 flex items-baseline justify-between">
+                                    <span className="text-[8px] text-agtic-taupe/60 uppercase tracking-wider font-medium">Total</span>
+                                    <span className="text-[11px] font-bold text-agtic-charcoal tabular-nums">{fmt(total)}</span>
                                 </div>
                             </div>
                         );
@@ -166,9 +166,9 @@ export function ProfileCard({ platformStatsMap, goals, onMinimize }: ProfileCard
 
                 {/* ── Divider ── */}
                 <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-prada-warm/40" />
-                    <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-prada-taupe/60">Goal Progress</span>
-                    <div className="flex-1 h-px bg-prada-warm/40" />
+                    <div className="flex-1 h-px bg-agtic-warm/40" />
+                    <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-agtic-taupe/60">Goal Progress</span>
+                    <div className="flex-1 h-px bg-agtic-warm/40" />
                 </div>
 
                 {/* ── Progress Bars ── */}
@@ -178,21 +178,21 @@ export function ProfileCard({ platformStatsMap, goals, onMinimize }: ProfileCard
                         return (
                             <div key={i} className="flex flex-col gap-1">
                                 <div className="flex justify-between items-end">
-                                    <span className="text-[10px] font-bold text-prada-charcoal/80 uppercase tracking-wider">
+                                    <span className="text-[10px] font-bold text-agtic-charcoal/80 uppercase tracking-wider">
                                         {goal.label}
                                     </span>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-sm font-bold text-prada-charcoal tabular-nums">{fmt(goal.current)}</span>
-                                        <span className="text-[10px] text-prada-taupe/60">/ {fmt(goal.target)}</span>
+                                        <span className="text-sm font-bold text-agtic-charcoal tabular-nums">{fmt(goal.current)}</span>
+                                        <span className="text-[10px] text-agtic-taupe/60">/ {fmt(goal.target)}</span>
                                     </div>
                                 </div>
-                                <div className="h-2 w-full bg-prada-warm/30 rounded-full overflow-hidden">
+                                <div className="h-2 w-full bg-agtic-warm/30 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full rounded-full bg-gradient-to-r ${goal.color} transition-all duration-1000 ease-out`}
                                         style={{ width: `${pct}%` }}
                                     />
                                 </div>
-                                <div className="text-right text-[9px] font-medium text-prada-charcoal/50">
+                                <div className="text-right text-[9px] font-medium text-agtic-charcoal/50">
                                     {pct.toFixed(1)}%
                                 </div>
                             </div>

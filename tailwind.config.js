@@ -7,24 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        prada: {
-          offwhite: 'rgb(var(--prada-offwhite) / <alpha-value>)',
-          cream: 'rgb(var(--prada-cream) / <alpha-value>)',
-          parchment: 'rgb(var(--prada-parchment) / <alpha-value>)',
-          stone: 'rgb(var(--prada-stone) / <alpha-value>)',
-          warm: 'rgb(var(--prada-warm) / <alpha-value>)',
-          taupe: 'rgb(var(--prada-taupe) / <alpha-value>)',
-          charcoal: 'rgb(var(--prada-charcoal) / <alpha-value>)',
-          black: 'rgb(var(--prada-black) / <alpha-value>)',
-          gold: 'rgb(var(--prada-gold) / <alpha-value>)',
-          darkgold: 'rgb(var(--prada-darkgold) / <alpha-value>)',
-          'red-light': 'rgb(var(--prada-red-light) / <alpha-value>)',
-          red: 'rgb(var(--prada-red) / <alpha-value>)',
+        agtic: {
+          offwhite: 'rgb(var(--agtic-offwhite) / <alpha-value>)',
+          cream: 'rgb(var(--agtic-cream) / <alpha-value>)',
+          parchment: 'rgb(var(--agtic-parchment) / <alpha-value>)',
+          stone: 'rgb(var(--agtic-stone) / <alpha-value>)',
+          warm: 'rgb(var(--agtic-warm) / <alpha-value>)',
+          taupe: 'rgb(var(--agtic-taupe) / <alpha-value>)',
+          charcoal: 'rgb(var(--agtic-charcoal) / <alpha-value>)',
+          black: 'rgb(var(--agtic-black) / <alpha-value>)',
+          gold: 'rgb(var(--agtic-gold) / <alpha-value>)',
+          darkgold: 'rgb(var(--agtic-darkgold) / <alpha-value>)',
+          'red-light': 'rgb(var(--agtic-red-light) / <alpha-value>)',
+          red: 'rgb(var(--agtic-red) / <alpha-value>)',
         }
       },
       fontFamily: {
         google: ['"Google Sans"', '"Noto Sans Thai"', 'sans-serif'],
         display: ['"Poiret One"', '"Noto Sans Thai"', 'serif'],
+        script: ['"MonteCarlo"', 'cursive'],
         body: ['"Noto Sans Thai"', 'Inter', 'sans-serif'],
         sans: ['"Noto Sans Thai"', 'Inter', 'sans-serif'],
       },

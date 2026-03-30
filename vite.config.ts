@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => {
             const url = new URL(path, 'http://localhost');
             const gid = url.searchParams.get('gid');
-            const sheetId = env.SHEET_ID || '1_MYS-pKcUNguQ4NNcYPU7sXQya9SioubuPFyRxV9_6s';
+            const sheetId = env.SHEET_ID || '14D-AafvQRGbfhMUr60c5v4p43RXJ7liPyo30xnZ85iM';
             return `/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
           }
         },

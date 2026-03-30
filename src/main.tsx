@@ -2,15 +2,16 @@ import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import AdminCalculator from './pages/AdminCalculator.tsx'
+import AdminDataManagement from './pages/AdminDataManagement.tsx'
+import AdminLogin from './pages/AdminLogin.tsx'
 import { LanguageProvider } from './i18n/LanguageContext'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
-import PasswordGate from './components/PasswordGate.tsx'
 
-const ADMIN_HASH = '#/admin-prada-calc'
+const ADMIN_HASH = '#/admin-agtic-calc'
 
 function Root() {
   const [isAdmin, setIsAdmin] = useState(() => window.location.hash === ADMIN_HASH)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('agtic_admin_auth') === 'true')
 
   useEffect(() => {
     const onHashChange = () => setIsAdmin(window.location.hash === ADMIN_HASH)
@@ -18,7 +19,10 @@ function Root() {
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
-  if (isAdmin) return <AdminCalculator />
+  if (isAdmin) {
+    if (!isAuthenticated) return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />
+    return <AdminDataManagement />
+  }
 
   return (
     <ErrorBoundary>
@@ -31,8 +35,6 @@ function Root() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <PasswordGate>
-      <Root />
-    </PasswordGate>
+    <Root />
   </StrictMode>,
 )

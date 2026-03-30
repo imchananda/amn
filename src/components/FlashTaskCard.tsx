@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface Task {
@@ -79,7 +79,7 @@ export default function FlashTaskCard({ task, isCompleted, onClick, onQuickCompl
     return (
         <div
             className={`relative flex items-stretch rounded-2xl overflow-hidden border transition-all cursor-pointer group ${isCompleted
-                ? 'opacity-60 border-prada-warm/20'
+                ? 'opacity-60 border-agtic-warm/20'
                 : expired
                     ? 'border-gray-300/30 opacity-50'
                     : urgent
@@ -111,12 +111,12 @@ export default function FlashTaskCard({ task, isCompleted, onClick, onQuickCompl
                 </div>
 
                 {/* Title */}
-                <p className="text-prada-charcoal text-xs font-semibold leading-tight line-clamp-2">
+                <p className="text-agtic-charcoal text-xs font-semibold leading-tight line-clamp-2">
                     {task.title || `${task.platform} Flash Mission`}
                 </p>
 
                 {/* Stats row */}
-                <div className="flex items-center gap-3 text-[10px] text-prada-taupe/70">
+                <div className="flex items-center gap-3 text-[10px] text-agtic-taupe/70">
                     {task.likes > 0 && <span>❤️ {task.likes.toLocaleString()}</span>}
                     {task.comments > 0 && <span>💬 {task.comments.toLocaleString()}</span>}
                     {task.reposts > 0 && <span>🔁 {task.reposts.toLocaleString()}</span>}
@@ -124,7 +124,7 @@ export default function FlashTaskCard({ task, isCompleted, onClick, onQuickCompl
                 </div>
 
                 {/* Action row */}
-                <div className="flex items-center justify-between gap-2 pt-1 border-t border-prada-warm/20">
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-agtic-warm/20">
                     <a
                         href={task.url}
                         target="_blank"
