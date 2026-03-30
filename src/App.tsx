@@ -105,8 +105,8 @@ const SHEETS_CONFIG = [
   { phase: 'all', label: 'All Tasks', gid: '0' },
 ];
 const MSG_SHEETS = {
-  COMPOUND: '211253247', // Sheet 1: Logic combining p1 + p2 + emoji
-  COMPLETE: '219458934'  // Sheet 2: Logic picking a complete sentence
+  COMPOUND: '', // Not using compound logic anymore
+  COMPLETE: '264913748'  // Sheet 2: Logic picking a complete sentence
 };
 // ===========================================
 
