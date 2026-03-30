@@ -1036,24 +1036,24 @@ function App() {
               <div className="absolute inset-0 bg-agtic-charcoal/40 backdrop-blur-sm animate-in fade-in duration-200" />
 
               <div
-                className="relative w-full max-w-[380px] bg-agtic-offwhite rounded-[24px] shadow-2xl border border-agtic-warm/50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+                className="relative w-full max-w-[380px] bg-zinc-900 rounded-[28px] shadow-[0_0_50px_rgba(0,0,0,0.9)] border border-white/10 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
                 onClick={e => e.stopPropagation()}
               >
 
                 {/* Header */}
-                <div className="px-4 py-3 pb-2.5 flex items-center justify-between border-b border-agtic-warm/60 bg-white/40">
+                <div className="px-4 py-3.5 pb-2.5 flex items-center justify-between border-b border-white/10 bg-black/20">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
                       {config.icon}
                     </div>
-                    <p className="text-[14px] font-bold text-agtic-charcoal truncate">{selectedTask.media || t('noTitle')}</p>
+                    <p className="text-[14px] font-bold text-white truncate">{selectedTask.media || t('noTitle')}</p>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 ml-2">
                     {/* Close Button */}
                     <button
                       onClick={() => setSelectedTask(null)}
-                      className="w-8 h-8 rounded-full bg-agtic-cream/50 hover:bg-agtic-warm flex items-center justify-center text-agtic-taupe transition-colors"
+                      className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors"
                     >
                       ✕
                     </button>
@@ -1061,19 +1061,19 @@ function App() {
                 </div>
 
                 {/* Body Content */}
-                <div className="p-4 space-y-3.5 bg-agtic-offwhite flex-1 overflow-y-auto max-h-[75vh]">
+                <div className="p-4 space-y-3.5 bg-zinc-900 flex-1 overflow-y-auto max-h-[75vh]">
 
                   {/* 1. Hashtags */}
                   {hasHashtags && (
-                    <div className="relative bg-white border border-agtic-warm/60 rounded-[16px] p-3 pt-2.5 shadow-sm">
+                    <div className="relative bg-black/40 border border-white/10 rounded-[16px] p-3 pt-2.5 shadow-sm">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-bold text-agtic-taupe/80 uppercase tracking-widest">{t('sectionHashtags')}</span>
+                        <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">{t('sectionHashtags')}</span>
                         {/* Copy Button */}
                         <button
                           onClick={() => handleCopyHashtags(selectedTask)}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border shadow-sm ${copiedType === 'hashtags'
-                            ? 'text-white bg-emerald-500 border-emerald-600'
-                            : 'text-agtic-charcoal bg-agtic-cream/40 border-agtic-warm hover:bg-agtic-cream hover:border-agtic-taupe/40'
+                            ? 'text-black bg-white border-white'
+                            : 'text-white/70 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white'
                             }`}
                         >
                           {copiedType === 'hashtags' ? (
@@ -1087,21 +1087,21 @@ function App() {
                         </button>
                       </div>
                       <div className="max-h-32 overflow-y-auto pr-1">
-                        <p className="text-[12.5px] text-agtic-charcoal/90 leading-relaxed font-medium whitespace-pre-wrap">{selectedTask.hashtags}</p>
+                        <p className="text-[12.5px] text-white/90 leading-relaxed font-medium whitespace-pre-wrap">{selectedTask.hashtags}</p>
                       </div>
                     </div>
                   )}
 
                   {/* 2. Generated Message */}
-                  <div className="relative bg-white border border-agtic-warm/60 rounded-[16px] p-3 pt-2.5 shadow-sm flex flex-col">
+                  <div className="relative bg-black/40 border border-white/10 rounded-[16px] p-3 pt-2.5 shadow-sm flex flex-col">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-bold text-agtic-taupe/80 uppercase tracking-widest">{t('sectionMessage')}</span>
+                      <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">{t('sectionMessage')}</span>
                       <div className="flex items-center gap-1.5">
                         {/* Regenerate Button */}
                         {generatedMessage && msgReady && (
                           <button
                             onClick={generateRandomMessage}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-agtic-charcoal bg-agtic-cream/40 border border-agtic-warm hover:bg-agtic-cream hover:border-agtic-taupe/40 transition-all shadow-sm"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all shadow-sm"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                             {t('regenerate')}
@@ -1112,8 +1112,8 @@ function App() {
                           <button
                             onClick={handleCopyMessage}
                             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border shadow-sm ${copiedType === 'message'
-                              ? 'text-white bg-emerald-500 border-emerald-600'
-                              : 'text-agtic-charcoal bg-agtic-cream/40 border-agtic-warm hover:bg-agtic-cream hover:border-agtic-taupe/40'
+                              ? 'text-black bg-white border-white'
+                              : 'text-white/70 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white'
                               }`}
                           >
                             {copiedType === 'message' ? (
@@ -1134,8 +1134,8 @@ function App() {
                         onClick={generateRandomMessage}
                         disabled={!msgReady}
                         className={`w-full py-4 rounded-xl text-[13px] font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${msgReady
-                          ? 'bg-agtic-cream/80 hover:bg-agtic-cream text-agtic-charcoal border border-agtic-warm'
-                          : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                          ? 'bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10'
+                          : 'bg-zinc-900/50 text-white/20 border border-white/5 cursor-not-allowed'
                           }`}
                       >
                         {msgReady ? (
@@ -1146,7 +1146,7 @@ function App() {
                         ) : t('noPositiveMessages')}
                       </button>
                     ) : (
-                      <p className="text-[13px] text-agtic-charcoal leading-relaxed">{generatedMessage}</p>
+                      <p className="text-[13px] text-white/90 leading-relaxed">{generatedMessage}</p>
                     )}
                   </div>
 
@@ -1156,8 +1156,8 @@ function App() {
                       <button
                         onClick={() => handleCopyBoth(selectedTask)}
                         className={`w-full py-3 rounded-[14px] text-[12.5px] font-bold transition-all shadow-sm border flex items-center justify-center gap-1.5 ${copiedType === 'both'
-                          ? 'bg-emerald-500 text-white border-emerald-600'
-                          : 'bg-agtic-cream/60 hover:bg-agtic-cream text-agtic-charcoal border-agtic-warm hover:border-agtic-taupe/40'
+                          ? 'bg-white text-black border-white'
+                          : 'bg-zinc-800 hover:bg-zinc-700 text-white border-white/10 hover:border-white/20'
                           }`}
                       >
                         {copiedType === 'both' ? (
@@ -1171,7 +1171,7 @@ function App() {
                       </button>
                     )}
 
-                    {showMarkDone && (
+                    {showMarkDone ? (
                       <div className="flex gap-2.5">
                         <button
                           onClick={() => handleGoToPost(selectedTask)}
@@ -1183,21 +1183,20 @@ function App() {
                         {isTaskCompleted(selectedTask) ? (
                           <button
                             onClick={() => handleUnmarkComplete(selectedTask)}
-                            className="flex-1 py-3.5 rounded-[14px] bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 text-[12.5px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                            className="flex-1 py-3.5 rounded-[14px] bg-white/10 hover:bg-white/20 text-white border border-white/20 text-[12.5px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
                           >
                             {t('done')}
                           </button>
                         ) : (
                           <button
                             onClick={() => handleMarkComplete(selectedTask)}
-                            className="flex-1 py-3.5 rounded-[14px] bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5 border border-transparent"
+                            className="flex-1 py-3.5 rounded-[14px] bg-white hover:bg-zinc-200 text-black text-[12.5px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 border border-transparent"
                           >
                             {t('markDoneBtn')}
                           </button>
                         )}
                       </div>
-                    )}
-                    {!showMarkDone && (
+                    ) : (
                       <button
                         onClick={() => handleGoToPost(selectedTask)}
                         className={`w-full py-3.5 rounded-[14px] bg-gradient-to-r ${config.color} hover:opacity-90 text-[12.5px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-1.5`}
@@ -1211,7 +1210,7 @@ function App() {
                   {tips.length > 0 && (
                     <div className="text-center pt-2 space-y-1">
                       {tips.map((tip, i) => (
-                        <p key={i} className="text-[10px] text-agtic-taupe/60 italic leading-snug">{tip}</p>
+                        <p key={i} className="text-[10px] text-white/40 italic leading-snug">{tip}</p>
                       ))}
                     </div>
                   )}
