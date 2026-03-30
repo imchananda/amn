@@ -6,8 +6,8 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // ตรวจสอบกับรหัสผ่านจาก .env หรือรหัสอ้างอิง
-    const correctPassword = (import.meta as any).env.VITE_ADMIN_PASSWORD || 'engagement07NTF';
+    // ตรวจสอบกับรหัสผ่านจาก .env
+    const correctPassword = (import.meta as any).env.VITE_ADMIN_PASSWORD || '';
 
     if (password === correctPassword) {
       sessionStorage.setItem('agtic_admin_auth', 'true');
@@ -28,15 +28,13 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
 
       <div className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-rose-900 rounded-2xl mx-auto mb-5 flex items-center justify-center shadow-lg shadow-red-900/50">
-            {/* กุญแจ ล็อคแม่กุญแจ Icon */}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-8 h-8 text-white stroke-2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2 font-display">N.T. Data Center</h1>
-          <p className="text-sm text-zinc-400">กรุณาใส่รหัสผ่านเพื่อเข้าสู่ระบบส่วนควบคุม</p>
+          {/* Custom Armani Icon Image */}
+          <img 
+            src="/nt-amn-2.png" 
+            alt="Armani Login Logo" 
+            className="w-16 h-16 object-cover rounded-2xl mx-auto mb-5 shadow-lg shadow-red-900/50" 
+          />
+          <h1 className="text-2xl font-bold text-white mb-2 font-display">Namtan x Armani</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
