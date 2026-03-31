@@ -187,11 +187,7 @@ function App() {
     setHasLoaded(true);
   }, []);
 
-  // Save completed state to localStorage
-  useEffect(() => {
-    if (!hasLoaded) return;
-    localStorage.setItem('social-tracker-completed-v3', JSON.stringify(completed));
-  }, [completed, hasLoaded]);
+
 
   // Check for 100% global achievement
   useEffect(() => {
@@ -604,13 +600,21 @@ function App() {
 
   // Mark task as complete
   const handleMarkComplete = (task: Task) => {
-    setCompleted(prev => ({
-      ...prev,
-      [task.phase]: {
-        ...(prev[task.phase] || {}),
-        [task.id]: { completedAt: new Date().toISOString() },
-      },
-    }));
+    setCompleted(prev => {
+      const newState = {
+        ...prev,
+        [task.phase]: {
+          ...(prev[task.phase] || {}),
+          [task.id]: { completedAt: new Date().toISOString() },
+        },
+      };
+      try {
+        localStorage.setItem('social-tracker-completed-v3', JSON.stringify(newState));
+      } catch (err) {
+        console.error('Save to localStorage failed', err);
+      }
+      return newState;
+    });
     setSelectedTask(null);
   };
 
@@ -622,6 +626,11 @@ function App() {
         const nextPhase = { ...next[task.phase] };
         delete nextPhase[task.id];
         next[task.phase] = nextPhase;
+      }
+      try {
+        localStorage.setItem('social-tracker-completed-v3', JSON.stringify(next));
+      } catch (err) {
+        console.error('Save to localStorage failed', err);
       }
       return next;
     });
