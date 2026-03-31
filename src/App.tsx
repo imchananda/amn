@@ -696,7 +696,7 @@ function App() {
           <div className="w-32 h-40 mb-6 relative group animate-in fade-in zoom-in duration-700">
             <div className="absolute inset-0 bg-white/30 rounded-2xl blur-xl group-hover:bg-white/40 transition-all duration-500 animate-pulse"></div>
             <img
-              src="/nt-amn-2.png"
+              src="/nt-amn-3.png"
               alt="Namtan Tipnaree"
               className="w-full h-full object-contain relative z-10 drop-shadow-2xl animate-bounce [animation-duration:3s]"
             />
@@ -737,8 +737,8 @@ function App() {
           <div className={`max-w-3xl mx-auto px-4 pb-0 transition-all duration-700 ${isScrolled ? 'pt-2 pb-2' : 'pt-10 sm:pt-14'}`}>
             
             {/* Armani Logo shown only on un-scrolled */}
-            <div className={`overflow-hidden transition-all duration-700 flex flex-col items-center justify-center w-full ${isScrolled ? 'h-0 opacity-0 mb-0 scale-95 origin-top' : 'h-20 sm:h-28 opacity-100 mb-6 sm:mb-8 scale-100 origin-center'}`}>
-              <img src="/armani.png" alt="Armani" className="h-full w-auto object-contain opacity-90" style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
+            <div className={`overflow-hidden transition-all duration-700 flex flex-col items-center justify-center w-full ${isScrolled ? 'h-0 opacity-0 mb-0 scale-95 origin-top' : 'h-6 sm:h-8 opacity-100 mb-5 sm:mb-7 scale-100 origin-center'}`}>
+              <img src="/Emporio_Armani_logo.svg" alt="Armani" className="h-full w-auto object-contain opacity-90" style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
             </div>
 
             {/* Hero: Image + Title */}
@@ -748,7 +748,7 @@ function App() {
               <div className={`flex-shrink-0 transition-all duration-700 ease-out ${isScrolled ? 'w-16 h-20 sm:w-20 sm:h-24' : 'w-40 h-56 sm:w-56 sm:h-[300px] relative'}`}>
                 <div className={`absolute inset-0 bg-white/20 rounded-full blur-2xl transition-all duration-700 ${isScrolled ? 'opacity-0' : 'opacity-100'}`}></div>
                 <img
-                  src="/nt-amn-2.png"
+                  src="/nt-amn-3.png"
                   alt="Namtan Tipnaree"
                   className="w-full h-full object-contain drop-shadow-2xl relative z-10 scale-110"
                 />
@@ -763,7 +763,7 @@ function App() {
                   </span>
                 </div>
 
-                <h1 className={`font-bold tracking-wide transition-all duration-700 ${isScrolled ? 'text-white/70 text-xs sm:text-sm leading-none whitespace-nowrap block' : 'text-white/90 text-sm sm:text-base leading-snug uppercase tracking-[0.2em] sm:tracking-[0.25em] block'}`} style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
+                <h1 className={`font-bold transition-all duration-700 whitespace-pre-line uppercase block ${isScrolled ? 'text-white/70 text-[9px] sm:text-[11px] leading-tight tracking-[0.15em] sm:tracking-[0.2em]' : 'text-white/90 text-sm sm:text-base leading-relaxed tracking-[0.2em] sm:tracking-[0.25em]'}`} style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
                   {t('appTitle')}
                 </h1>
 

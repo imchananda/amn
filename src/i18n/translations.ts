@@ -3,7 +3,7 @@ export type Language = 'th' | 'en';
 export const translations = {
     th: {
         // Header
-        appTitle: 'FRAGRANCE AMBASSADOR',
+        appTitle: 'EMPORIO ARMANI\nTHAILAND FRAGRANCE AMBASSADOR',
         featuredEngagementTitle: "ยายเดือน บูส บูส! 🚀",
         featuredEngagementToggle: 'บูสๆ 🚀',
         importantMediaTitle: 'รายชื่อสื่อแฟชั่น 🌟',
@@ -160,7 +160,7 @@ export const translations = {
     },
     en: {
         // Header
-        appTitle: 'FRAGRANCE AMBASSADOR',
+        appTitle: 'EMPORIO ARMANI\nTHAILAND FRAGRANCE AMBASSADOR',
         featuredEngagementTitle: "Let’s Hit the Goal Together! 🔥",
         featuredEngagementToggle: 'Boost 🚀',
         importantMediaTitle: 'Fashion Media Priority List 🌟',

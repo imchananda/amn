@@ -30,7 +30,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
         <div className="text-center mb-8">
           {/* Custom Armani Icon Image */}
           <img 
-            src="/nt-amn-2.png" 
+            src="/nt-amn-3.png" 
             alt="Armani Login Logo" 
             className="w-24 h-auto object-contain mx-auto mb-6" 
           />

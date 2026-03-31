@@ -50,13 +50,13 @@ body {
   z-index: 10;
 }
 
-/* Base Image Layer (ccc.jpg) */
+/* Base Image Layer (eee.jpg) */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -3;
-  background-image: url('/ccc.jpg');
+  background-image: url('/eee.jpg');
   background-size: cover;
   background-position: center 20%;
   opacity: 0.25; /* Darker photograph */
