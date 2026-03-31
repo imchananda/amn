@@ -15,6 +15,8 @@ interface SheetTask {
 }
 
 // ─── Sheet Config ─────────────────────────────────────────────────────────────
+const DEFAULT_HASHTAG = "NAMTAN BRAND AM ARMANI \n#NamtanXNewPOY";
+
 const SHEETS_CONFIG = [
     { phase: 'all', label: 'ข้อมูลทั้งหมด (All)', gid: '0' },
 ];
@@ -125,7 +127,7 @@ export default function AdminDataManagement() {
         platform: 'instagram',
         media: '',
         url: '',
-        hashtag: ''
+        hashtag: DEFAULT_HASHTAG
     });
     // Media Autosuggest State
     const uniqueMediaNames = useMemo(() => Array.from(new Set(tasks.map(t => t.media).filter(Boolean))), [tasks]);
@@ -270,7 +272,7 @@ export default function AdminDataManagement() {
                     platform: 'instagram',
                     media: '',
                     url: '',
-                    hashtag: ''
+                    hashtag: DEFAULT_HASHTAG
                 });
             }, 2000);
 
@@ -320,7 +322,7 @@ export default function AdminDataManagement() {
                         <button
                             onClick={() => {
                                 setEditingTaskId(null);
-                                setFormData({ mark: false, platform: 'instagram', media: '', url: '', hashtag: '' });
+                                setFormData({ mark: false, platform: 'instagram', media: '', url: '', hashtag: DEFAULT_HASHTAG });
                                 setShowAddModal(true);
                             }}
                             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-emerald-500/20"
