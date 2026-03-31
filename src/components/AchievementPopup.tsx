@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 // ⚙️ SETTINGS - เปลี่ยน URL รูปตรงนี้
@@ -10,8 +10,6 @@ interface AchievementPopupProps {
     onClose: () => void;
     completedCount: number;
     totalCount: number;
-    onCredits?: () => void;
-    creditsSubmitted?: boolean;
 }
 
 // Elegant Celebration Effects — Gold & Cream luxury tones
@@ -95,7 +93,7 @@ const CelebrationEffects = () => {
     );
 };
 
-export default function AchievementPopup({ isOpen, onClose, completedCount, totalCount, onCredits, creditsSubmitted }: AchievementPopupProps) {
+export default function AchievementPopup({ isOpen, onClose, completedCount, totalCount }: AchievementPopupProps) {
     const { language } = useLanguage();
     const [showConfetti, setShowConfetti] = useState(false);
 
@@ -217,20 +215,6 @@ export default function AchievementPopup({ isOpen, onClose, completedCount, tota
                                     </svg>
                                     <span>{language === 'th' ? 'แชร์ไป X' : 'Share to X'}</span>
                                 </button>
-
-                                {/* Credits Button */}
-                                {onCredits && (
-                                    <button
-                                        onClick={onCredits}
-                                        className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[#1a1a2e] to-[#16213e] hover:opacity-90 text-agtic-gold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center justify-center gap-2 border border-agtic-gold/30"
-                                    >
-                                        <span>{creditsSubmitted ? '🎞️' : '🎬'}</span>
-                                        <span>{creditsSubmitted
-                                            ? (language === 'th' ? 'ดู End Credits' : 'Watch End Credits')
-                                            : (language === 'th' ? 'ลงชื่อใน Credits' : 'Add Me to Credits')
-                                        }</span>
-                                    </button>
-                                )}
 
                             </div>
                         </div>

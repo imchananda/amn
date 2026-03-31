@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react';
 import { useLanguage } from './i18n/LanguageContext';
-import NameSubmitModal, { hasSubmittedCredits } from './components/NameSubmitModal';
-import EndCreditsModal from './components/EndCreditsModal';
 
 
 // Types
@@ -119,6 +117,7 @@ function App() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [generatedMessage, setGeneratedMessage] = useState<string>('');
   const [copiedType, setCopiedType] = useState<'message' | 'hashtags' | 'both' | null>(null);
+  const [selectedMsgLang, setSelectedMsgLang] = useState<'th' | 'en'>('th');
 
   // Positive messages state — organized by language
   const [msgPools, setMsgPools] = useState<Record<string, { p1: string[], p2: string[], complete: string[] }>>({
@@ -145,9 +144,6 @@ function App() {
   const [hasLoaded, setHasLoaded] = useState(false);
 
   // Achievement popup states (Global)
-  const [showNameSubmit, setShowNameSubmit] = useState(false);
-  const [showEndCredits, setShowEndCredits] = useState(false);
-  const [creditsSubmitted, setCreditsSubmitted] = useState(() => hasSubmittedCredits());
   const [showMarkDone, setShowMarkDone] = useState(true);
   const [achievementUnlocked, setAchievementUnlocked] = useState(() => {
     try {
@@ -181,30 +177,7 @@ function App() {
     return count;
   }, [completed, allTasks]);
 
-  // Focus tasks = tasks with mark === true
-  const allFocusTasks = useMemo(() => totalTasksList.filter(t => t.mark), [totalTasksList]);
-  const allFocusTasksDone = useMemo(() => {
-    if (allFocusTasks.length === 0) return false;
-    return allFocusTasks.every(task => !!(completed[task.phase] && completed[task.phase][task.id]));
-  }, [allFocusTasks, completed]);
 
-  // Auto-show Credits popup when all focus/hot tasks are completed
-  useEffect(() => {
-    if (loading) return;
-    if (allFocusTasks.length === 0) return;
-    if (!allFocusTasksDone) return;
-    if (creditsSubmitted) return;
-    // Small delay so the completion mark animation plays first
-    const timer = setTimeout(() => setShowNameSubmit(true), 800);
-    return () => clearTimeout(timer);
-  }, [allFocusTasksDone, allFocusTasks.length, creditsSubmitted, loading]);
-
-  // Auto-close NameSubmitModal if user unchecks a focus task
-  useEffect(() => {
-    if (showNameSubmit && !allFocusTasksDone) {
-      setShowNameSubmit(false);
-    }
-  }, [allFocusTasksDone, showNameSubmit]);
 
 
   // (Stats logic removed)
@@ -547,8 +520,8 @@ function App() {
   };
 
   // Generate random positive message — 2-step: pick from each pool, then pick 1 of 4 patterns
-  const generateRandomMessage = useCallback(() => {
-    const activePool = (msgPools[language]?.p1?.length || msgPools[language]?.complete?.length) ? msgPools[language] : msgPools.en;
+  const generateRandomMessage = useCallback((lang: 'th' | 'en') => {
+    const activePool = (msgPools[lang]?.p1?.length || msgPools[lang]?.complete?.length) ? msgPools[lang] : msgPools.en;
     if (!activePool) return;
 
     const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
@@ -584,7 +557,7 @@ function App() {
       setGeneratedMessage(sentence);
     }
     setCopiedType(null);
-  }, [msgPools, emojiPool, language]);
+  }, [msgPools, emojiPool]);
 
   // Copy functions for 3 different options
   const handleCopyMessage = async () => {
@@ -1013,10 +986,9 @@ function App() {
           const config = platformConfig[platform as keyof typeof platformConfig] || { color: 'from-slate-400 to-slate-500', icon: null, name: 'Unknown' };
           const isFacebook = platform === 'facebook';
           const hasHashtags = !!selectedTask.hashtags && !isFacebook;
-          const activePool = msgPools[language]?.p1?.length ? msgPools[language] : msgPools.en;
-          const msgReady =
-            ((activePool.p1?.length ?? 0) > 0 && (activePool.p2?.length ?? 0) > 0 && emojiPool.length > 0) ||
-            (activePool.complete?.length ?? 0) > 0;
+          const thReady = ((msgPools.th?.p1?.length ?? 0) > 0 && (msgPools.th?.p2?.length ?? 0) > 0 && emojiPool.length > 0) || (msgPools.th?.complete?.length ?? 0) > 0;
+          const enReady = ((msgPools.en?.p1?.length ?? 0) > 0 && (msgPools.en?.p2?.length ?? 0) > 0 && emojiPool.length > 0) || (msgPools.en?.complete?.length ?? 0) > 0;
+          const anyMsgReady = thReady || enReady;
 
           // Per-platform usage tips
           const tips: string[] = (() => {
@@ -1098,14 +1070,25 @@ function App() {
                       <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">{t('sectionMessage')}</span>
                       <div className="flex items-center gap-1.5">
                         {/* Regenerate Button */}
-                        {generatedMessage && msgReady && (
-                          <button
-                            onClick={generateRandomMessage}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all shadow-sm"
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                            {t('regenerate')}
-                          </button>
+                        {generatedMessage && anyMsgReady && (
+                          <div className="flex items-center gap-1.5">
+                            {thReady && (
+                              <button
+                                onClick={() => { setSelectedMsgLang('th'); generateRandomMessage('th'); }}
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm ${selectedMsgLang === 'th' ? 'bg-white/20 text-white' : 'text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white'}`}
+                              >
+                                ↻ TH
+                              </button>
+                            )}
+                            {enReady && (
+                              <button
+                                onClick={() => { setSelectedMsgLang('en'); generateRandomMessage('en'); }}
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm ${selectedMsgLang === 'en' ? 'bg-white/20 text-white' : 'text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white'}`}
+                              >
+                                ↻ EN
+                              </button>
+                            )}
+                          </div>
                         )}
                         {/* Copy Button */}
                         {generatedMessage && (
@@ -1130,21 +1113,28 @@ function App() {
                     </div>
 
                     {!generatedMessage ? (
-                      <button
-                        onClick={generateRandomMessage}
-                        disabled={!msgReady}
-                        className={`w-full py-4 rounded-xl text-[13px] font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${msgReady
-                          ? 'bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10'
-                          : 'bg-zinc-900/50 text-white/20 border border-white/5 cursor-not-allowed'
-                          }`}
-                      >
-                        {msgReady ? (
-                          <>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="m5 3 1 1" /><path d="m5 21 1-1" /><path d="m21 3-1 1" /><path d="m21 21-1-1" /></svg>
-                            {t('generateCaption')}
-                          </>
-                        ) : t('noPositiveMessages')}
-                      </button>
+                      <div className="flex gap-2 w-full">
+                        <button
+                          onClick={() => { setSelectedMsgLang('th'); generateRandomMessage('th'); }}
+                          disabled={!thReady}
+                          className={`flex-1 py-4 rounded-xl text-[13px] font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${thReady
+                              ? 'bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10'
+                              : 'bg-zinc-900/50 text-white/20 border border-white/5 cursor-not-allowed'
+                            }`}
+                        >
+                          {thReady ? <>🎲 THAI</> : t('noPositiveMessages')}
+                        </button>
+                        <button
+                          onClick={() => { setSelectedMsgLang('en'); generateRandomMessage('en'); }}
+                          disabled={!enReady}
+                          className={`flex-1 py-4 rounded-xl text-[13px] font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${enReady
+                              ? 'bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10'
+                              : 'bg-zinc-900/50 text-white/20 border border-white/5 cursor-not-allowed'
+                            }`}
+                        >
+                          {enReady ? <>🎲 ENGLISH</> : t('noPositiveMessages')}
+                        </button>
+                      </div>
                     ) : (
                       <p className="text-[13px] text-white/90 leading-relaxed">{generatedMessage}</p>
                     )}
@@ -1223,54 +1213,6 @@ function App() {
       }
 
 
-      {/* 🎬 Credits Floating Button — visible only when all focus+hot tasks are done */}
-      {allFocusTasks.length > 0 && allFocusTasksDone && (
-        <div className="fixed bottom-24 right-5 z-50">
-          <div className="relative">
-            {/* Glowing Ping Effect */}
-            <div className="absolute inset-0 rounded-full bg-agtic-taupe animate-ping opacity-60 duration-1000"></div>
-
-            <button
-              onClick={() => creditsSubmitted ? setShowEndCredits(true) : setShowNameSubmit(true)}
-              className="relative w-16 h-16 rounded-full bg-gradient-to-br from-agtic-taupe to-agtic-charcoal border-[3px] border-white/50 shadow-xl shadow-agtic-charcoal/50 flex flex-col items-center justify-center gap-0.5 hover:scale-110 active:scale-95 transition-all group overflow-hidden"
-              title={creditsSubmitted ? 'ดู End Credits' : 'ลงชื่อใน Credits'}
-            >
-              {/* Shine sweep effect on hover */}
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
-
-              <span className="text-2xl leading-none drop-shadow-md group-hover:scale-110 group-hover:-translate-y-0.5 transition-transform duration-300">
-                {creditsSubmitted ? '✨' : '🎟️'}
-              </span>
-              <span className="text-white text-[8px] font-black tracking-[0.15em] uppercase leading-none mt-1 drop-shadow-sm">
-                {language === 'th' ? 'เครดิต' : 'Credits'}
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 🏅 Name Submit Modal (100% Complete — combined achievement + credits) */}
-      <NameSubmitModal
-        isOpen={showNameSubmit}
-        onClose={() => setShowNameSubmit(false)}
-        onSubmitted={() => {
-          setCreditsSubmitted(true);
-          setShowNameSubmit(false);
-          setTimeout(() => setShowEndCredits(true), 500);
-        }}
-        onViewCredits={() => {
-          setShowNameSubmit(false);
-          setShowEndCredits(true);
-        }}
-        completedCount={totalCompletedCount}
-        totalCount={totalTasksList.length}
-      />
-
-      {/* 🎬 End Credits Modal */}
-      <EndCreditsModal
-        isOpen={showEndCredits}
-        onClose={() => setShowEndCredits(false)}
-      />
 
     </div >
   );
