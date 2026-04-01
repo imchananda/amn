@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { FaInstagram, FaFacebook, FaYoutube, FaWeibo, FaTiktok, FaSearch, FaPlus, FaCog, FaTimes, FaSpinner, FaCheckCircle, FaStar } from 'react-icons/fa';
+import { FaInstagram, FaFacebook, FaYoutube, FaWeibo, FaTiktok, FaSearch, FaPlus, FaTimes, FaSpinner, FaCheckCircle, FaStar } from 'react-icons/fa';
 import { FaXTwitter, FaThreads } from 'react-icons/fa6';
 import { SiXiaohongshu } from 'react-icons/si';
 
@@ -115,11 +115,11 @@ export default function AdminDataManagement() {
     
     // UI states
     const [showAddModal, setShowAddModal] = useState(false);
-    const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     
-    // App Script Config
-    const [gasUrl, setGasUrl] = useState(() => localStorage.getItem('agtic_gas_url') || '');
+    // App Script Config — ดึงจาก env variable (global สำหรับทุก admin)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gasUrl: string = (import.meta as any).env?.VITE_GAS_URL || '';
 
     // Add Form State
     const [formData, setFormData] = useState({
@@ -224,9 +224,7 @@ export default function AdminDataManagement() {
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!gasUrl) {
-            alert('กรุณาตั้งค่า Google Apps Script Web App URL ในปุ่มตั้งค่า (ฟันเฟือง) มุมขวาบนก่อนครับ');
-            setShowAddModal(false);
-            setShowSettingsModal(true);
+            alert('ไม่พบการตั้งค่า Google Apps Script URL — กรุณาติดต่อผู้ดูแลระบบเพื่อตั้งค่า VITE_GAS_URL ใน environment ครับ');
             return;
         }
 
@@ -330,13 +328,7 @@ export default function AdminDataManagement() {
                             <FaPlus className="text-xs" />
                             เพิ่มรายชื่อสื่อ
                         </button>
-                        <button
-                            onClick={() => setShowSettingsModal(true)}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-800 border border-gray-700 hover:bg-gray-700 transition"
-                            title="ตั้งค่า Web App URL"
-                        >
-                            <FaCog className="text-gray-400" />
-                        </button>
+
                     </div>
                 </div>
             </div>
@@ -582,39 +574,7 @@ export default function AdminDataManagement() {
                 </div>
             )}
 
-            {/* ── Settings Modal ─────────────────────────────────────── */}
-            {showSettingsModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettingsModal(false)} />
-                    <div className="relative bg-[#0f1115] border border-gray-700 rounded-3xl w-full max-w-md shadow-2xl p-6">
-                        <h2 className="text-lg font-bold text-white mb-2">⚙️ ตั้งค่าการเชื่อมต่อ Google Sheets</h2>
-                        <p className="text-xs text-gray-400 mb-6 leading-relaxed">โปรดสร้าง Google Apps Script Web App แล้วนำ URL มากรอกที่นี่ เพื่อให้ระบบสามารถบันทึกตารางลง Sheets กลับไปได้</p>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-400 mb-1.5">Google Apps Script URL (Web App)</label>
-                                <input 
-                                    type="url" 
-                                    value={gasUrl} 
-                                    onChange={(e) => setGasUrl(e.target.value)}
-                                    placeholder="https://script.google.com/macros/s/..." 
-                                    className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm focus:border-emerald-500 outline-none"
-                                />
-                            </div>
-                            <button 
-                                onClick={() => {
-                                    localStorage.setItem('agtic_gas_url', gasUrl);
-                                    setShowSettingsModal(false);
-                                    alert('บันทึกการตั้งค่าสำเร็จ');
-                                }}
-                                className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white rounded-xl font-bold text-sm transition"
-                            >
-                                บันทึกการตั้งค่า
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+
 
         </div>
     );
