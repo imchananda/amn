@@ -644,16 +644,11 @@ function App() {
     handleMarkComplete(task);
   };
 
-  const [isScrolled, setIsScrolled] = useState(false);
   const scrollTimeoutRef = useRef<number | null>(null);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     
-    // Header transition logic - intelligently show header when scrolling up to the very top, or past 20px
-    const shouldBeScrolled = scrollTop > 20;
-    setIsScrolled(prev => prev !== shouldBeScrolled ? shouldBeScrolled : prev);
-
     // Infinite scroll load more
     if (scrollTimeoutRef.current) return;
     if (scrollHeight - scrollTop - clientHeight < 400) {
@@ -703,134 +698,83 @@ function App() {
 
 
 
-      {/* Header Container (Fixed at top) */}
-      <div className="relative z-40 flex-shrink-0 bg-transparent">
-        {/* Header */}
-        <header className="transition-all duration-700 relative z-50 bg-transparent border-b border-transparent">
-          {/* Language toggle moved to bottom footer stats bar */}
-
-          <div className={`max-w-3xl mx-auto w-full transition-[padding] duration-500 ease-out ${isScrolled ? 'pt-2 pb-2' : 'pt-10 sm:pt-14'}`}>
-            {/* Crossfade Header Logic */}
-            <div className="w-full relative px-4">
-              
-              {/* STATE 1: HERO (Big Header) */}
-              <div 
-                className="grid transition-[grid-template-rows] duration-500 ease-in-out"
-                style={{ gridTemplateRows: isScrolled ? '0fr' : '1fr' }}
-              >
-                <div className="overflow-hidden min-h-0">
-                  <div className={`flex flex-col items-center justify-center w-full transition-[opacity,transform,filter] duration-500 ease-out pb-2 origin-top ${isScrolled ? 'opacity-0 scale-95 blur-md' : 'opacity-100 scale-100 blur-0'}`}>
-                    
-                    {/* Armani Logo */}
-                    <div className="flex flex-col items-center justify-center w-full h-6 sm:h-8 mb-4 sm:mb-6">
-                      <img src="/Emporio_Armani_logo.svg" alt="Armani" className="h-full w-auto object-contain opacity-90" style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
-                    </div>
-
-                    {/* Avatar Image */}
-                    <div className="flex-shrink-0 w-32 h-44 sm:w-48 sm:h-64 relative">
-                      <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl opacity-100"></div>
-                      <img
-                        src="/nt-amn-3.png"
-                        alt="Namtan Tipnaree"
-                        className="w-full h-full object-contain drop-shadow-2xl relative z-10 scale-110"
-                      />
-                    </div>
-
-                    {/* Texts */}
-                    <div className="flex flex-col text-center mt-3 mb-2 items-center">
-                      <div className="mb-2">
-                        <span className="text-white leading-none whitespace-nowrap text-[48px] sm:text-[64px] block" style={{ fontFamily: '"MonteCarlo", cursive', fontWeight: 400 }}>
-                          Namtan Tipnaree
-                        </span>
-                      </div>
-                      <h1 className="font-bold whitespace-pre-line uppercase block text-white/90 text-xs sm:text-sm leading-relaxed tracking-[0.2em] sm:tracking-[0.25em]" style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
-                        {t('appTitle')}
-                      </h1>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-              {/* STATE 2: STICKY (Small Header) */}
-              <div 
-                className="grid transition-[grid-template-rows] duration-500 ease-in-out"
-                style={{ gridTemplateRows: isScrolled ? '1fr' : '0fr' }}
-              >
-                <div className="overflow-hidden min-h-0">
-                  <div className={`flex items-center flex-row gap-3 sm:gap-4 justify-center w-full transition-[opacity,transform,filter] duration-500 ease-out pt-1 pb-1 ${isScrolled ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-md'}`}>
-                    
-                    {/* Avatar Image Small */}
-                    <div className="flex-shrink-0 w-12 h-16 sm:w-16 sm:h-20 relative">
-                      <img
-                        src="/nt-amn-3.png"
-                        alt="Namtan Tipnaree"
-                        className="w-full h-full object-contain drop-shadow-2xl relative z-10 scale-110"
-                      />
-                    </div>
-
-                    {/* Texts Small */}
-                    <div className="flex flex-col text-left justify-center">
-                      <div className="mb-0">
-                        <span className="text-white leading-none whitespace-nowrap text-3xl sm:text-4xl tracking-tight block" style={{ fontFamily: '"MonteCarlo", cursive', fontWeight: 400 }}>
-                          Namtan Tipnaree
-                        </span>
-                      </div>
-                      <h1 className="font-bold whitespace-pre-line uppercase block text-white/70 text-[8px] sm:text-[10px] leading-tight tracking-[0.15em] sm:tracking-[0.2em]" style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
-                        {t('appTitle')}
-                      </h1>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Platform Filters (Sticky on Header) */}
-            <div className={`w-full flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide snap-x px-1 transition-[padding] duration-500 ${isScrolled ? 'pt-1 pb-2' : 'pt-3 pb-1'}`}>
-              <button
-                onClick={() => setTaskFilterPlatform(null)}
-                className={`px-3.5 sm:px-4 h-7 sm:h-8 rounded-full shrink-0 text-[10px] sm:text-[11px] font-bold border transition-all flex items-center justify-center gap-1.5 shadow-sm snap-start backdrop-blur-md ${!taskFilterPlatform
-                  ? 'bg-gradient-to-r from-pink-500/90 via-rose-500/90 to-red-600/90 border-pink-400/50 text-white shadow-lg shadow-rose-900/40 scale-[1.03]'
-                  : 'bg-black/40 border-white/10 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/30'
-                  }`}
-              >
-                <span className="uppercase tracking-widest leading-none pt-px">All</span>
-                <span className={`text-[10px] sm:text-[11px] font-semibold leading-none ${!taskFilterPlatform ? 'text-white/95' : 'text-white/50'}`}>{totalTasksList.length}</span>
-              </button>
-              {(['instagram', 'tiktok', 'x', 'facebook', 'youtube'] as const).map(p => {
-                const isActive = taskFilterPlatform === p;
-                const count = totalTasksList.filter(t => t.platform === p).length;
-                
-                return (
-                  <button
-                    key={p}
-                    onClick={() => setTaskFilterPlatform(isActive ? null : p)}
-                    className={`h-7 sm:h-8 px-3 sm:px-3.5 rounded-full shrink-0 border transition-all flex items-center justify-center gap-1.5 shadow-sm snap-start backdrop-blur-md ${isActive
-                      ? 'bg-gradient-to-r from-pink-500/90 via-rose-500/90 to-red-600/90 border-pink-400/50 text-white shadow-lg shadow-rose-900/40 scale-[1.03]'
-                      : 'bg-black/40 border-white/10 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/30'
-                      }`}
-                  >
-                    <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-current flex items-center justify-center">
-                      {platformConfig[p].icon}
-                    </div>
-                    <span className={`text-[10px] sm:text-[11px] font-semibold leading-none ${isActive ? 'text-white/95' : 'text-white/50'}`}>{count}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-          </div>
-        </header>
-      </div>
-
-      {/* Scrollable Middle Area */}
+      {/* Scrollable Area (Hero + Content) */}
       <main
         ref={mainRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto min-h-0"
+        className="flex-1 overflow-y-auto min-h-0 relative scroll-smooth"
       >
+        {/* HERO SECTION */}
+        <div className="max-w-3xl mx-auto w-full pt-8 sm:pt-12 px-4 pb-0">
+          <div className="flex flex-col items-center justify-center w-full pb-4 sm:pb-6">
+            
+            {/* Armani Logo */}
+            <div className="flex flex-col items-center justify-center w-full h-5 sm:h-7 mb-4 sm:mb-6">
+              <img src="/Emporio_Armani_logo.svg" alt="Armani" className="h-full w-auto object-contain opacity-90" style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
+            </div>
+
+            {/* Avatar Image */}
+            <div className="flex-shrink-0 w-32 h-44 sm:w-48 sm:h-64 md:w-56 md:h-[300px] relative">
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl opacity-100"></div>
+              <img
+                src="/nt-amn-3.png"
+                alt="Namtan Tipnaree"
+                className="w-full h-full object-contain drop-shadow-2xl relative z-10 scale-110"
+              />
+            </div>
+
+            {/* Texts */}
+            <div className="flex flex-col text-center mt-3 sm:mt-5 mb-1 sm:mb-2 items-center">
+              <div className="mb-2 sm:mb-4">
+                <span className="text-white leading-none whitespace-nowrap text-[48px] sm:text-[64px] md:text-[72px] block" style={{ fontFamily: '"MonteCarlo", cursive', fontWeight: 400 }}>
+                  Namtan Tipnaree
+                </span>
+              </div>
+              <h1 className="font-bold whitespace-pre-line uppercase block text-white/90 text-[10px] sm:text-xs md:text-sm leading-relaxed tracking-[0.2em] sm:tracking-[0.25em]" style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
+                {t('appTitle')}
+              </h1>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Platform Filters (Sticky) */}
+        <div className="sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5 w-full shadow-lg shadow-black/20">
+          <div className="w-full max-w-3xl mx-auto flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide snap-x px-2 py-3">
+            <button
+              onClick={() => setTaskFilterPlatform(null)}
+              className={`px-3.5 sm:px-4 h-7 sm:h-8 rounded-full shrink-0 text-[10px] sm:text-[11px] font-bold border transition-all flex items-center justify-center gap-1.5 shadow-sm snap-start backdrop-blur-md ${!taskFilterPlatform
+                ? 'bg-gradient-to-r from-pink-500/90 via-rose-500/90 to-red-600/90 border-pink-400/50 text-white shadow-lg shadow-rose-900/40 scale-[1.03]'
+                : 'bg-black/40 border-white/10 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/30'
+                }`}
+            >
+              <span className="uppercase tracking-widest leading-none pt-px">All</span>
+              <span className={`text-[10px] sm:text-[11px] font-semibold leading-none ${!taskFilterPlatform ? 'text-white/95' : 'text-white/50'}`}>{totalTasksList.length}</span>
+            </button>
+            {(['instagram', 'tiktok', 'x', 'facebook', 'youtube'] as const).map(p => {
+              const isActive = taskFilterPlatform === p;
+              const count = totalTasksList.filter(t => t.platform === p).length;
+              
+              return (
+                <button
+                  key={p}
+                  onClick={() => setTaskFilterPlatform(isActive ? null : p)}
+                  className={`h-7 sm:h-8 px-3 sm:px-3.5 rounded-full shrink-0 border transition-all flex items-center justify-center gap-1.5 shadow-sm snap-start backdrop-blur-md ${isActive
+                    ? 'bg-gradient-to-r from-pink-500/90 via-rose-500/90 to-red-600/90 border-pink-400/50 text-white shadow-lg shadow-rose-900/40 scale-[1.03]'
+                    : 'bg-black/40 border-white/10 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/30'
+                    }`}
+                >
+                  <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-current flex items-center justify-center">
+                    {platformConfig[p].icon}
+                  </div>
+                  <span className={`text-[10px] sm:text-[11px] font-semibold leading-none ${isActive ? 'text-white/95' : 'text-white/50'}`}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Dynamic Content List Area */}
         <div className="max-w-3xl mx-auto flex flex-col gap-1 px-3 pt-4 pb-2">
 
           {/* Error state */}
