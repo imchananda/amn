@@ -644,35 +644,13 @@ function App() {
     handleMarkComplete(task);
   };
 
-  const touchStartY = useRef<number>(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollTimeoutRef = useRef<number | null>(null);
-  
-  const handleWheelContainer = (e: React.WheelEvent) => {
-    if (e.deltaY > 10 && !isScrolled) {
-      setIsScrolled(true);
-    } else if (e.deltaY < -10 && mainRef.current && mainRef.current.scrollTop <= 0) {
-      setIsScrolled(false);
-    }
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const deltaY = touchStartY.current - e.touches[0].clientY;
-    if (deltaY > 30 && !isScrolled) {
-      setIsScrolled(true);
-    } else if (deltaY < -30 && mainRef.current && mainRef.current.scrollTop <= 0) {
-      setIsScrolled(false);
-    }
-  };
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     
-    // Header transition logic - Prevent duplicate state updates (reduces scroll lag)
+    // Header transition logic - intelligently show header when scrolling up to the very top, or past 20px
     const shouldBeScrolled = scrollTop > 20;
     setIsScrolled(prev => prev !== shouldBeScrolled ? shouldBeScrolled : prev);
 
@@ -717,9 +695,6 @@ function App() {
   return (
     <div 
       className="fixed inset-0 flex flex-col bg-transparent overflow-hidden"
-      onWheel={handleWheelContainer}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
     >
       {/* Subtle paper texture overlay */}
       <div className="fixed inset-0 z-0 opacity-[0.03] pointer-events-none" style={{
@@ -734,19 +709,19 @@ function App() {
         <header className="transition-all duration-700 relative z-50 bg-transparent border-b border-transparent">
           {/* Language toggle moved to bottom footer stats bar */}
 
-          <div className={`max-w-3xl mx-auto px-4 pb-0 transition-all duration-700 ${isScrolled ? 'pt-2 pb-2' : 'pt-10 sm:pt-14'}`}>
+          <div className={`max-w-3xl mx-auto px-4 pb-0 transition-[padding] duration-500 ease-out ${isScrolled ? 'pt-2 pb-2' : 'pt-10 sm:pt-14'}`}>
             
             {/* Armani Logo shown only on un-scrolled */}
-            <div className={`overflow-hidden transition-all duration-700 flex flex-col items-center justify-center w-full ${isScrolled ? 'h-0 opacity-0 mb-0 scale-95 origin-top' : 'h-6 sm:h-8 opacity-100 mb-5 sm:mb-7 scale-100 origin-center'}`}>
+            <div className={`overflow-hidden transition-[height,opacity,margin,transform] duration-500 ease-out flex flex-col items-center justify-center w-full ${isScrolled ? 'h-0 opacity-0 mb-0 scale-95 origin-top' : 'h-6 sm:h-8 opacity-100 mb-5 sm:mb-7 scale-100 origin-center'}`}>
               <img src="/Emporio_Armani_logo.svg" alt="Armani" className="h-full w-auto object-contain opacity-90" style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
             </div>
 
             {/* Hero: Image + Title */}
-            <div className={`flex transition-all duration-700 w-full ${isScrolled ? 'items-center flex-row gap-3 sm:gap-4 justify-center' : 'flex-col items-center justify-center text-center gap-0'}`}>
+            <div className={`flex transition-all duration-500 ease-out w-full ${isScrolled ? 'items-center flex-row gap-3 sm:gap-4 justify-center' : 'flex-col items-center justify-center text-center gap-0'}`}>
               
               {/* Avatar Image */}
-              <div className={`flex-shrink-0 transition-all duration-700 ease-out ${isScrolled ? 'w-16 h-20 sm:w-20 sm:h-24' : 'w-40 h-56 sm:w-56 sm:h-[300px] relative'}`}>
-                <div className={`absolute inset-0 bg-white/20 rounded-full blur-2xl transition-all duration-700 ${isScrolled ? 'opacity-0' : 'opacity-100'}`}></div>
+              <div className={`flex-shrink-0 transition-all duration-500 ease-out ${isScrolled ? 'w-16 h-20 sm:w-20 sm:h-24' : 'w-40 h-56 sm:w-56 sm:h-[300px] relative'}`}>
+                <div className={`absolute inset-0 bg-white/20 rounded-full blur-2xl transition-opacity duration-500 ease-out ${isScrolled ? 'opacity-0' : 'opacity-100'}`}></div>
                 <img
                   src="/nt-amn-3.png"
                   alt="Namtan Tipnaree"
@@ -755,15 +730,15 @@ function App() {
               </div>
 
               {/* Texts */}
-              <div className={`transition-all duration-700 flex flex-col ${isScrolled ? 'text-left mt-0 justify-center' : 'text-center mt-3 sm:mt-5 mb-4 sm:mb-6 items-center'}`}>
+              <div className={`transition-all duration-500 ease-out flex flex-col ${isScrolled ? 'text-left mt-0 justify-center' : 'text-center mt-3 sm:mt-5 mb-4 sm:mb-6 items-center'}`}>
                 
-                <div className={`transition-all duration-700 ${isScrolled ? 'mb-2 sm:mb-3' : 'mb-3 sm:mb-5'}`}>
-                  <span className={`text-white leading-none whitespace-nowrap transition-all duration-700 ${isScrolled ? 'text-4xl sm:text-[40px] tracking-tight block' : 'text-[56px] sm:text-[72px] block'}`} style={{ fontFamily: '"MonteCarlo", cursive', fontWeight: 400 }}>
+                <div className={`transition-[margin] duration-500 ease-out ${isScrolled ? 'mb-2 sm:mb-3' : 'mb-3 sm:mb-5'}`}>
+                  <span className={`text-white leading-none whitespace-nowrap transition-all duration-500 ease-out ${isScrolled ? 'text-4xl sm:text-[40px] tracking-tight block' : 'text-[56px] sm:text-[72px] block'}`} style={{ fontFamily: '"MonteCarlo", cursive', fontWeight: 400 }}>
                     Namtan Tipnaree
                   </span>
                 </div>
 
-                <h1 className={`font-bold transition-all duration-700 whitespace-pre-line uppercase block ${isScrolled ? 'text-white/70 text-[9px] sm:text-[11px] leading-tight tracking-[0.15em] sm:tracking-[0.2em]' : 'text-white/90 text-sm sm:text-base leading-relaxed tracking-[0.2em] sm:tracking-[0.25em]'}`} style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
+                <h1 className={`font-bold transition-all duration-500 ease-out whitespace-pre-line uppercase block ${isScrolled ? 'text-white/70 text-[9px] sm:text-[11px] leading-tight tracking-[0.15em] sm:tracking-[0.2em]' : 'text-white/90 text-sm sm:text-base leading-relaxed tracking-[0.2em] sm:tracking-[0.25em]'}`} style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
                   {t('appTitle')}
                 </h1>
 
