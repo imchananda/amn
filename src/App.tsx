@@ -709,44 +709,86 @@ function App() {
         <header className="transition-all duration-700 relative z-50 bg-transparent border-b border-transparent">
           {/* Language toggle moved to bottom footer stats bar */}
 
-          <div className={`max-w-3xl mx-auto px-4 pb-0 transition-[padding] duration-500 ease-out ${isScrolled ? 'pt-2 pb-2' : 'pt-10 sm:pt-14'}`}>
-            
-            {/* Armani Logo shown only on un-scrolled */}
-            <div className={`overflow-hidden transition-[height,opacity,margin,transform] duration-500 ease-out flex flex-col items-center justify-center w-full ${isScrolled ? 'h-0 opacity-0 mb-0 scale-95 origin-top' : 'h-6 sm:h-8 opacity-100 mb-5 sm:mb-7 scale-100 origin-center'}`}>
-              <img src="/Emporio_Armani_logo.svg" alt="Armani" className="h-full w-auto object-contain opacity-90" style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
-            </div>
-
-            {/* Hero: Image + Title */}
-            <div className={`flex transition-all duration-500 ease-out w-full ${isScrolled ? 'items-center flex-row gap-3 sm:gap-4 justify-center' : 'flex-col items-center justify-center text-center gap-0'}`}>
+          <div className={`max-w-3xl mx-auto w-full transition-[padding] duration-500 ease-out ${isScrolled ? 'pt-2 pb-2' : 'pt-10 sm:pt-14'}`}>
+            {/* Crossfade Header Logic */}
+            <div className="w-full relative px-4">
               
-              {/* Avatar Image */}
-              <div className={`flex-shrink-0 transition-all duration-500 ease-out ${isScrolled ? 'w-16 h-20 sm:w-20 sm:h-24' : 'w-40 h-56 sm:w-56 sm:h-[300px] relative'}`}>
-                <div className={`absolute inset-0 bg-white/20 rounded-full blur-2xl transition-opacity duration-500 ease-out ${isScrolled ? 'opacity-0' : 'opacity-100'}`}></div>
-                <img
-                  src="/nt-amn-3.png"
-                  alt="Namtan Tipnaree"
-                  className="w-full h-full object-contain drop-shadow-2xl relative z-10 scale-110"
-                />
-              </div>
+              {/* STATE 1: HERO (Big Header) */}
+              <div 
+                className="grid transition-[grid-template-rows] duration-500 ease-in-out"
+                style={{ gridTemplateRows: isScrolled ? '0fr' : '1fr' }}
+              >
+                <div className="overflow-hidden min-h-0">
+                  <div className={`flex flex-col items-center justify-center w-full transition-[opacity,transform,filter] duration-500 ease-out pb-2 origin-top ${isScrolled ? 'opacity-0 scale-95 blur-md' : 'opacity-100 scale-100 blur-0'}`}>
+                    
+                    {/* Armani Logo */}
+                    <div className="flex flex-col items-center justify-center w-full h-6 sm:h-8 mb-4 sm:mb-6">
+                      <img src="/Emporio_Armani_logo.svg" alt="Armani" className="h-full w-auto object-contain opacity-90" style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
+                    </div>
 
-              {/* Texts */}
-              <div className={`transition-all duration-500 ease-out flex flex-col ${isScrolled ? 'text-left mt-0 justify-center' : 'text-center mt-3 sm:mt-5 mb-4 sm:mb-6 items-center'}`}>
-                
-                <div className={`transition-[margin] duration-500 ease-out ${isScrolled ? 'mb-2 sm:mb-3' : 'mb-3 sm:mb-5'}`}>
-                  <span className={`text-white leading-none whitespace-nowrap transition-all duration-500 ease-out ${isScrolled ? 'text-4xl sm:text-[40px] tracking-tight block' : 'text-[56px] sm:text-[72px] block'}`} style={{ fontFamily: '"MonteCarlo", cursive', fontWeight: 400 }}>
-                    Namtan Tipnaree
-                  </span>
+                    {/* Avatar Image */}
+                    <div className="flex-shrink-0 w-32 h-44 sm:w-48 sm:h-64 relative">
+                      <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl opacity-100"></div>
+                      <img
+                        src="/nt-amn-3.png"
+                        alt="Namtan Tipnaree"
+                        className="w-full h-full object-contain drop-shadow-2xl relative z-10 scale-110"
+                      />
+                    </div>
+
+                    {/* Texts */}
+                    <div className="flex flex-col text-center mt-3 mb-2 items-center">
+                      <div className="mb-2">
+                        <span className="text-white leading-none whitespace-nowrap text-[48px] sm:text-[64px] block" style={{ fontFamily: '"MonteCarlo", cursive', fontWeight: 400 }}>
+                          Namtan Tipnaree
+                        </span>
+                      </div>
+                      <h1 className="font-bold whitespace-pre-line uppercase block text-white/90 text-xs sm:text-sm leading-relaxed tracking-[0.2em] sm:tracking-[0.25em]" style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
+                        {t('appTitle')}
+                      </h1>
+                    </div>
+
+                  </div>
                 </div>
-
-                <h1 className={`font-bold transition-all duration-500 ease-out whitespace-pre-line uppercase block ${isScrolled ? 'text-white/70 text-[9px] sm:text-[11px] leading-tight tracking-[0.15em] sm:tracking-[0.2em]' : 'text-white/90 text-sm sm:text-base leading-relaxed tracking-[0.2em] sm:tracking-[0.25em]'}`} style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
-                  {t('appTitle')}
-                </h1>
-
               </div>
+
+              {/* STATE 2: STICKY (Small Header) */}
+              <div 
+                className="grid transition-[grid-template-rows] duration-500 ease-in-out"
+                style={{ gridTemplateRows: isScrolled ? '1fr' : '0fr' }}
+              >
+                <div className="overflow-hidden min-h-0">
+                  <div className={`flex items-center flex-row gap-3 sm:gap-4 justify-center w-full transition-[opacity,transform,filter] duration-500 ease-out pt-1 pb-1 ${isScrolled ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-md'}`}>
+                    
+                    {/* Avatar Image Small */}
+                    <div className="flex-shrink-0 w-12 h-16 sm:w-16 sm:h-20 relative">
+                      <img
+                        src="/nt-amn-3.png"
+                        alt="Namtan Tipnaree"
+                        className="w-full h-full object-contain drop-shadow-2xl relative z-10 scale-110"
+                      />
+                    </div>
+
+                    {/* Texts Small */}
+                    <div className="flex flex-col text-left justify-center">
+                      <div className="mb-0">
+                        <span className="text-white leading-none whitespace-nowrap text-3xl sm:text-4xl tracking-tight block" style={{ fontFamily: '"MonteCarlo", cursive', fontWeight: 400 }}>
+                          Namtan Tipnaree
+                        </span>
+                      </div>
+                      <h1 className="font-bold whitespace-pre-line uppercase block text-white/70 text-[8px] sm:text-[10px] leading-tight tracking-[0.15em] sm:tracking-[0.2em]" style={{ fontFamily: '"Bodoni Moda", serif', fontWeight: 600 }}>
+                        {t('appTitle')}
+                      </h1>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             {/* Platform Filters (Sticky on Header) */}
-            <div className={`transition-all duration-700 w-full flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide snap-x px-1 ${isScrolled ? 'pt-2 pb-2' : 'pt-4 pb-1'}`}>
+            <div className={`w-full flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide snap-x px-1 transition-[padding] duration-500 ${isScrolled ? 'pt-1 pb-2' : 'pt-3 pb-1'}`}>
               <button
                 onClick={() => setTaskFilterPlatform(null)}
                 className={`px-3.5 sm:px-4 h-7 sm:h-8 rounded-full shrink-0 text-[10px] sm:text-[11px] font-bold border transition-all flex items-center justify-center gap-1.5 shadow-sm snap-start backdrop-blur-md ${!taskFilterPlatform
