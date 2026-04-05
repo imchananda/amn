@@ -9,9 +9,21 @@ import ErrorBoundary from './components/ErrorBoundary.tsx'
 
 const ADMIN_HASH = '#/admin-agtic-calc'
 
+const USER_AUTH_KEY = 'agtic_user_auth'
+const ADMIN_AUTH_KEY = 'agtic_admin_auth'
+
 function Root() {
   const [isAdmin, setIsAdmin] = useState(() => window.location.hash === ADMIN_HASH)
-  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('agtic_admin_auth') === 'true')
+
+  // User auth — persistent across session (sessionStorage)
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(
+    () => sessionStorage.getItem(USER_AUTH_KEY) === 'true'
+  )
+
+  // Admin auth
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(
+    () => sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true'
+  )
 
   useEffect(() => {
     const onHashChange = () => setIsAdmin(window.location.hash === ADMIN_HASH)
@@ -19,9 +31,33 @@ function Root() {
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
+  // ─── Admin route ───────────────────────────────────────────────────────────
   if (isAdmin) {
-    if (!isAuthenticated) return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />
+    if (!isAdminAuthenticated) {
+      return (
+        <AdminLogin
+          mode="admin"
+          onLoginSuccess={() => {
+            sessionStorage.setItem(ADMIN_AUTH_KEY, 'true')
+            setIsAdminAuthenticated(true)
+          }}
+        />
+      )
+    }
     return <AdminDataManagement />
+  }
+
+  // ─── Public route — requires user password ─────────────────────────────────
+  if (!isUserAuthenticated) {
+    return (
+      <AdminLogin
+        mode="user"
+        onLoginSuccess={() => {
+          sessionStorage.setItem(USER_AUTH_KEY, 'true')
+          setIsUserAuthenticated(true)
+        }}
+      />
+    )
   }
 
   return (
