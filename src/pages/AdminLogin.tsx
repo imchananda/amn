@@ -14,12 +14,10 @@ export default function AdminLogin({ onLoginSuccess, mode = 'user' }: AdminLogin
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const envKey =
+    const correctPassword =
       mode === 'admin'
-        ? (import.meta as any).env.VITE_ADMIN_PASSWORD
-        : (import.meta as any).env.VITE_USER_PASSWORD;
-
-    const correctPassword = envKey || '';
+        ? (import.meta.env.VITE_ADMIN_PASSWORD || '')
+        : (import.meta.env.VITE_USER_PASSWORD || '');
 
     if (password === correctPassword) {
       onLoginSuccess();
